@@ -110,7 +110,7 @@ const concepts = [
   {
     title: 'Cognitive Planning',
     description: 'Enabling robots to reason, plan, and execute complex tasks in dynamic environments.',
-    link: '/docs/Module-4-Vision-Language-Action/Week-10',
+    link: '/docs/Module-4-Vision-Language-Action/Week-10/building-high-level-cognitive-execution-pipeline',
   },
   {
     title: 'Human-Robot Interaction',
