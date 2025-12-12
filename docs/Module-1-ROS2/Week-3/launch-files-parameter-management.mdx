@@ -1,0 +1,621 @@
+---
+title: "Launch Files & Parameter Management"
+sidebar_position: 4
+---
+
+# Launch Files & Parameter Management
+
+## Learning Objectives
+
+By the end of this chapter, you should be able to:
+- Create and configure ROS 2 launch files for complex robot systems
+- Manage parameters using YAML configuration files and command-line tools
+- Organize and structure launch files for maintainable robot deployments
+- Understand parameter declaration, handling, and validation in nodes
+- Implement dynamic parameter updates during runtime
+- Use launch arguments for configurable system deployments
+
+## Introduction to ROS 2 Launch System
+
+The ROS 2 launch system provides a powerful and flexible way to start multiple nodes simultaneously with specific configurations. Unlike ROS 1, ROS 2 uses Python-based launch files by default, offering greater flexibility and programmability for complex robotic systems.
+
+This chapter covers both the launch system and parameter management, which are closely related concepts in ROS 2 as launch files typically handle parameter configuration for nodes.
+
+## Launch File Basics
+
+### Launch File Structure
+
+ROS 2 launch files are Python scripts that define how to launch nodes and configure the system:
+
+```python
+import launch
+from launch import LaunchDescription
+from launch_ros.actions import Node
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
+
+def generate_launch_description():
+    """Generate launch description with all nodes for the system."""
+    
+    # Declare launch arguments
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    
+    # Declare launch argument with default value
+    declare_use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='false',
+        description='Use simulation clock if true'
+    )
+    
+    # Define nodes
+    my_node = Node(
+        package='my_package',
+        executable='my_node',
+        name='my_node',
+        parameters=[
+            {'param1': 'value1'},
+            {'param2': 42},
+            PathJoinSubstitution([FindPackageShare('my_package'), 'config', 'my_config.yaml'])
+        ],
+        remappings=[
+            ('/original_topic', '/remapped_topic')
+        ],
+        arguments=['--arg1', 'value1']
+    )
+    
+    # Return launch description
+    return LaunchDescription([
+        declare_use_sim_time_arg,
+        my_node
+    ])
+```
+
+### Launch File Components
+
+Key components of a launch file include:
+- **LaunchDescription**: The root container containing all launch actions
+- **Node**: Defines a node to be launched with its configuration
+- **DeclareLaunchArgument**: Defines parameters that can be passed to the launch file
+- **Substitutions**: Dynamic values that can be resolved at launch time
+
+## Advanced Launch File Features
+
+### Conditional Launch Actions
+
+Launch files support conditional execution based on launch arguments:
+
+```python
+from launch.conditions import IfCondition, UnlessCondition
+from launch.substitutions import LaunchConfiguration
+
+def generate_launch_description():
+    # Launch argument for enabling/disabling features
+    enable_gui = LaunchConfiguration('enable_gui', default='false')
+    
+    # Node that runs only if GUI is enabled
+    gui_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        condition=IfCondition(enable_gui)
+    )
+    
+    # Node that runs unless GUI is enabled
+    headless_node = Node(
+        package='my_package',
+        executable='headless_node',
+        name='headless_node',
+        condition=UnlessCondition(enable_gui)
+    )
+    
+    return LaunchDescription([
+        gui_node,
+        headless_node
+    ])
+```
+
+### Launch File Includes
+
+Complex systems can be organized by including other launch files:
+
+```python
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from ament_index_python.packages import get_package_share_directory
+
+def generate_launch_description():
+    # Include another launch file
+    other_launch_file = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            get_package_share_directory('other_package'),
+            '/launch/other_launch.py'
+        ]),
+        launch_arguments={'arg1': 'value1'}.items()
+    )
+    
+    return LaunchDescription([
+        other_launch_file
+    ])
+```
+
+### Group Launch Actions
+
+Launch actions can be grouped for organization and scoping:
+
+```python
+from launch.actions import GroupAction
+from launch_ros.actions import PushRosNamespace
+
+def generate_launch_description():
+    # Group nodes under a namespace
+    robot_group = GroupAction(
+        actions=[
+            PushRosNamespace('robot1'),
+            Node(
+                package='navigation2',
+                executable='bt_navigator',
+                name='bt_navigator'
+            ),
+            Node(
+                package='navigation2',
+                executable='controller_server',
+                name='controller_server'
+            )
+        ]
+    )
+    
+    return LaunchDescription([
+        robot_group
+    ])
+```
+
+## Launch Substitutions
+
+### Parameter Substitution
+
+Launch files support various substitution mechanisms:
+
+```python
+from launch.substitutions import TextSubstitution, EnvironmentVariable
+from launch_ros.substitutions import FindPackageShare
+
+def generate_launch_description():
+    # Text substitution
+    custom_param = TextSubstitution(text='custom_value')
+    
+    # Environment variable
+    home_dir = EnvironmentVariable(name='HOME')
+    
+    # Package path
+    config_path = PathJoinSubstitution([
+        FindPackageShare('my_package'),
+        'config',
+        'my_config.yaml'
+    ])
+    
+    my_node = Node(
+        package='my_package',
+        executable='my_node',
+        name='my_node',
+        parameters=[config_path],
+        arguments=[custom_param]
+    )
+    
+    return LaunchDescription([
+        my_node
+    ])
+```
+
+## Parameter Management
+
+### YAML Parameter Files
+
+Parameters can be organized in YAML files for better management:
+
+```yaml
+# config/my_robot_params.yaml
+/**:
+  ros__parameters:
+    use_sim_time: false
+    update_rate: 50.0
+    publish_frequency: 20.0
+
+/tf_publisher:
+  ros__parameters:
+    publish_frequency: 10.0
+    buffer_size: 10
+
+/motion_controller:
+  ros__parameters:
+    max_velocity: 1.0
+    acceleration_limit: 2.0
+    control_frequency: 100.0
+    pid:
+      kp: 1.5
+      ki: 0.1
+      kd: 0.05
+
+/sensor_processor:
+  ros__parameters:
+    queue_size: 5
+    processing_timeout: 0.1
+    sensor_types: ['lidar', 'camera', 'imu']
+```
+
+### Loading Parameters in Nodes
+
+Loading parameters in C++ nodes:
+
+```cpp
+#include "rclcpp/rclcpp.hpp"
+
+class ParameterExample : public rclcpp::Node
+{
+public:
+    ParameterExample() : Node("parameter_example")
+    {
+        // Declare parameters with default values and descriptions
+        this->declare_parameter<std::string>("robot_name", "default_robot");
+        this->declare_parameter<double>("max_velocity", 1.0);
+        this->declare_parameter<std::vector<std::string>>("sensor_types", 
+            std::vector<std::string>{"lidar", "camera"});
+        
+        // Get parameter values
+        robot_name_ = this->get_parameter("robot_name").as_string();
+        max_velocity_ = this->get_parameter("max_velocity").as_double();
+        sensor_types_ = this->get_parameter("sensor_types").as_string_array();
+        
+        // Parameter callback for dynamic updates
+        parameter_callback_handle_ = this->add_on_set_parameters_callback(
+            std::bind(&ParameterExample::parametersCallback, this, std::placeholders::_1));
+    }
+
+private:
+    rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr 
+        parameter_callback_handle_;
+    
+    std::string robot_name_;
+    double max_velocity_;
+    std::vector<std::string> sensor_types_;
+    
+    rclcpp::ParametersCallbackType parametersCallback(
+        const std::vector<rclcpp::Parameter> & parameters)
+    {
+        rcl_interfaces::msg::SetParametersResult result;
+        result.successful = true;
+        
+        for (const auto & parameter : parameters) {
+            if (parameter.get_name() == "max_velocity") {
+                if (parameter.get_type() != rclcpp::ParameterType::PARAMETER_DOUBLE) {
+                    result.successful = false;
+                    result.reason = "max_velocity must be a double";
+                    return result;
+                }
+                
+                double new_velocity = parameter.as_double();
+                if (new_velocity < 0.0 || new_velocity > 5.0) {
+                    result.successful = false;
+                    result.reason = "max_velocity must be between 0.0 and 5.0";
+                    return result;
+                }
+                
+                max_velocity_ = new_velocity;
+            }
+        }
+        
+        return result;
+    }
+};
+```
+
+### Loading Parameters in Python Nodes
+
+Loading parameters in Python nodes:
+
+```python
+import rclpy
+from rclpy.node import Node
+from rcl_interfaces.msg import ParameterDescriptor, ParameterType
+
+class ParamNode(Node):
+    def __init__(self):
+        super().__init__('param_node')
+        
+        # Declare parameters with types and descriptions
+        self.declare_parameter(
+            'robot_name',
+            'default_robot',
+            ParameterDescriptor(
+                type=ParameterType.PARAMETER_STRING,
+                description='Name of the robot'
+            )
+        )
+        
+        self.declare_parameter(
+            'max_velocity',
+            1.0,
+            ParameterDescriptor(
+                type=ParameterType.PARAMETER_DOUBLE,
+                description='Maximum velocity for the robot',
+                floating_point_range=[0.0, 5.0]
+            )
+        )
+        
+        # Get parameter values
+        self.robot_name = self.get_parameter('robot_name').value
+        self.max_velocity = self.get_parameter('max_velocity').value
+        
+        # Add parameter callback for dynamic updates
+        self.add_on_set_parameters_callback(self.parameters_callback)
+    
+    def parameters_callback(self, params):
+        """Callback for parameter updates."""
+        successful = True
+        reason = ''
+        
+        for param in params:
+            if param.name == 'max_velocity':
+                if param.type != ParameterType.PARAMETER_DOUBLE:
+                    return {'successful': False, 'reason': 'max_velocity must be a double'}
+                
+                if not 0.0 <= param.value <= 5.0:
+                    return {'successful': False, 'reason': 'max_velocity must be between 0.0 and 5.0'}
+        
+        return {'successful': successful, 'reason': reason}
+```
+
+## Launch and Parameter Best Practices
+
+### Organizing Complex Launch Systems
+
+For complex robot systems, organize launch files in a hierarchical structure:
+
+```
+robot_package/
+├── launch/
+│   ├── robot.launch.py          # Main launch file
+│   ├── sensors.launch.py        # Sensor-specific nodes
+│   ├── controllers.launch.py    # Control system nodes
+│   └── navigation.launch.py     # Navigation-specific nodes
+├── config/
+│   ├── robot_params.yaml        # Main robot parameters
+│   ├── sensors_params.yaml      # Sensor parameters
+│   ├── controller_params.yaml   # Controller parameters
+│   └── nav_params.yaml          # Navigation parameters
+└── params/
+    ├── robot1_params.yaml       # Robot-specific overrides
+    └── robot2_params.yaml       # Robot-specific overrides
+```
+
+### Parameter Validation
+
+Implement parameter validation for robust systems:
+
+```python
+def validate_parameters(self):
+    """Validate parameters to ensure system safety."""
+    max_vel = self.get_parameter('max_velocity').value
+    if max_vel < 0.0:
+        self.get_logger().error(f"Invalid max_velocity: {max_vel}")
+        return False
+    
+    # Additional validation logic
+    return True
+```
+
+## Dynamic Parameter Updates
+
+### Using rclpy.Parameter for Runtime Updates
+
+Parameters can be updated at runtime:
+
+```python
+import rclpy
+from rclpy.parameter import Parameter
+
+def update_parameter(self, param_name, param_value):
+    """Update a parameter at runtime."""
+    param = Parameter(param_name, Parameter.Type.DOUBLE, param_value)
+    self.set_parameters([param])
+
+def handle_parameter_change(self):
+    """Example of handling parameter changes."""
+    # Update parameters based on external conditions
+    if self.emergency_stop_active:
+        self.update_parameter('max_velocity', 0.0)
+    else:
+        self.update_parameter('max_velocity', self.normal_max_velocity)
+```
+
+### Using ros2 param CLI Tools
+
+Runtime parameter management using command line:
+
+```bash
+# List parameters for a node
+ros2 param list /my_node
+
+# Get a parameter value
+ros2 param get /my_node param_name
+
+# Set a parameter value
+ros2 param set /my_node param_name new_value
+
+# Dump all parameters to a file
+ros2 param dump /my_node --output params.yaml
+
+# Load parameters from a file
+ros2 param load /my_node params.yaml
+```
+
+## Advanced Launch Patterns
+
+### Robot-Specific Launch Configurations
+
+Handle different robot configurations using launch files:
+
+```python
+def generate_launch_description():
+    # Robot type launch argument
+    robot_type = LaunchConfiguration('robot_type')
+    
+    # Declare robot type argument
+    declare_robot_type = DeclareLaunchArgument(
+        'robot_type',
+        description='Type of robot to launch',
+        choices=['turtlebot', 'husky', 'custom']
+    )
+    
+    # Conditional launch based on robot type
+    robot_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+                FindPackageShare('my_robot_description'),
+                'launch',
+                [LaunchConfiguration('robot_type'), '_launch.py']
+            ])
+        ])
+    )
+    
+    return LaunchDescription([
+        declare_robot_type,
+        robot_launch
+    ])
+```
+
+### Environment-Specific Configurations
+
+Handle different environments (simulation, real robot, testing):
+
+```python
+def generate_launch_description():
+    # Environment type
+    environment = LaunchConfiguration('environment')
+    
+    # Get environment-specific parameters
+    params_file = PythonExpression([
+        '"',
+        PathJoinSubstitution([FindPackageShare('my_package'), 'config']),
+        '/params_",',
+        environment,
+        ',".yaml"'
+    ])
+    
+    my_node = Node(
+        package='my_package',
+        executable='my_node',
+        name='my_node',
+        parameters=[params_file]
+    )
+    
+    return LaunchDescription([
+        DeclareLaunchArgument(
+            'environment',
+            default_value='real',
+            choices=['real', 'sim', 'test'],
+            description='Environment to run in'
+        ),
+        my_node
+    ])
+```
+
+## Launch File Debugging
+
+### Common Launch File Issues
+
+Common issues and their solutions:
+
+```python
+# Issue: Node not found
+# Solution: Check package name and executable name
+Node(
+    package='correct_package_name',  # Make sure this is correct
+    executable='my_node_executable',  # Check this matches the executable name
+    name='my_node'
+)
+
+# Issue: Parameter file not found
+# Solution: Use PathJoinSubstitution for correct path resolution
+parameters=[
+    PathJoinSubstitution([FindPackageShare('my_package'), 'config', 'params.yaml'])
+]
+
+# Issue: Launch file doesn't execute
+# Solution: Check for Python syntax errors and proper function definition
+def generate_launch_description():  # This function is required
+    return LaunchDescription([...])
+```
+
+### Launch File Testing
+
+Test launch files using launch testing:
+
+```python
+# test/test_launch_file.py
+import unittest
+import launch
+from launch import LaunchDescription
+from launch_ros.actions import Node
+from launch_testing.actions import ReadyToTest
+import launch_testing
+
+def generate_test_description():
+    test_node = Node(
+        package='my_package',
+        executable='test_node',
+        name='test_node'
+    )
+    
+    return LaunchDescription([
+        test_node,
+        ReadyToTest()
+    ])
+
+class TestLaunchFile(unittest.TestCase):
+    def test_node_launch(self, proc_info, test_node):
+        """Test that the node launches correctly."""
+        proc_info.assertWaitForShutdown(process=test_node, timeout=5)
+```
+
+## Performance Considerations
+
+### Launch File Optimization
+
+Optimize launch files for better performance:
+
+- Use `condition` attributes to avoid starting unnecessary nodes
+- Organize nodes in logical groups to reduce complexity
+- Use appropriate parameter loading strategies (file vs. inline)
+- Consider startup order for interdependent nodes
+
+### Parameter Loading Strategies
+
+Choose the right parameter loading strategy:
+
+- **Inline parameters**: For simple, fixed values
+- **YAML files**: For complex, structured configurations
+- **Launch arguments**: For dynamic, runtime configurations
+- **Parameter services**: For runtime updates
+
+## Exercises and Self-Check
+
+1. **Launch File Creation**: Create a launch file that starts 3-4 nodes with different parameters and remappings. Include launch arguments that allow runtime configuration.
+
+2. **Parameter Management**: Design a parameter management system for a robot with sensors, controllers, and navigation. Create YAML files and launch files that organize these parameters logically.
+
+3. **Dynamic Parameters**: Implement a node that accepts dynamic parameter updates and adjusts its behavior accordingly. Test with `ros2 param` tools.
+
+4. **Conditional Launching**: Create a launch file with conditional node launching based on launch arguments (e.g., GUI vs. headless mode).
+
+5. **Environment Configuration**: Design a launch system that supports different environments (simulation, real robot, testing) with appropriate parameter changes.
+
+## Summary
+
+Launch files and parameter management are crucial components of ROS 2 systems, providing the infrastructure for configuring and starting complex robotic applications. The Python-based launch system offers flexibility and programmability, while the parameter system provides a consistent way to manage configuration across all nodes.
+
+Understanding these concepts is essential for creating maintainable, configurable, and robust robotic systems. Well-designed launch files and parameter management systems make it easy to deploy robots in different configurations and environments while maintaining consistent behavior and easy debugging capabilities.
+
+---
+
+**Keywords**: ROS 2 Launch, Parameter Management, Launch Files, Configuration, Parameter Server, System Deployment

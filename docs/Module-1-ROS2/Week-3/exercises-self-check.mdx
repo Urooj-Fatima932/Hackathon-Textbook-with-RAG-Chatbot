@@ -1,0 +1,108 @@
+# Exercises and Self-Check Questions - Week 3: ROS 2 Basics
+
+## Chapter 1: ROS 2 Architecture
+
+### Conceptual Questions
+1. Explain the key differences between ROS 1 and ROS 2 architectures. What motivated these changes?
+2. Describe the role of DDS (Data Distribution Service) in ROS 2 architecture.
+3. What are Quality of Service (QoS) policies and why are they important in ROS 2?
+
+### Analysis Questions
+4. Compare the communication models of ROS 1 (master-based) and ROS 2 (DDS-based). What are the advantages of each?
+5. Analyze the security architecture differences between ROS 1 and ROS 2.
+6. Explain how the distributed architecture of ROS 2 addresses the single point of failure in ROS 1.
+
+### Technical Questions
+7. Implement a basic ROS 2 node in both C++ and Python that demonstrates the node lifecycle.
+8. Configure different QoS policies for a publisher and analyze the effects on message delivery.
+9. Design a multi-robot system using ROS 2 architecture. How would DDS enable communication between robots?
+
+## Chapter 2: Nodes, Topics, Services
+
+### Implementation Questions
+1. Create a publisher node that publishes sensor data (e.g., temperature readings) at regular intervals.
+2. Create a subscriber node that receives the sensor data and performs basic processing (e.g., averaging).
+3. Implement a service server that provides mathematical operations (e.g., addition, multiplication).
+4. Create a service client that calls the service server with different parameters.
+
+### Advanced Implementation
+5. Create a ROS 2 node with parameters that can be changed at runtime.
+6. Implement a node that uses multiple callback groups to handle different types of messages concurrently.
+7. Design an action server for a long-running task (e.g., robot movement) with feedback and status updates.
+
+### Debugging Questions
+8. Use ROS 2 CLI tools (ros2 topic, ros2 service, etc.) to debug a communication problem between nodes.
+9. Identify and fix common issues in ROS 2 communication (e.g., incompatible message types, network issues).
+10. Analyze the performance of your nodes and identify potential bottlenecks.
+
+## Chapter 3: Python Agents → ROS Controllers
+
+### System Design Questions
+1. Design a complete system architecture connecting a Python-based learning agent to ROS 2 controllers for a mobile robot.
+2. Create a safety layer that prevents dangerous commands from being executed by the robot.
+3. Design a real-time interface that maintains a 50Hz control rate while processing sensor data.
+
+### Implementation Questions
+4. Implement a simple Python agent that navigates a robot to avoid obstacles using laser scan data.
+5. Create a controller interface that converts high-level agent goals into low-level ROS control commands.
+6. Implement a reward system for a learning agent that operates a robot in a physical environment.
+
+### Integration Questions
+7. Connect a pre-trained neural network model to a ROS 2 system for robot control.
+8. Design a system that allows multiple agents to coordinate their actions through ROS 2.
+9. Implement a monitoring system that tracks agent performance and robot safety metrics.
+
+### Advanced Questions
+10. Create a learning agent that can adapt its behavior based on feedback from ROS controllers.
+11. Design a fail-safe mechanism that switches to manual control when the agent malfunctions.
+12. Implement a simulation-to-reality transfer system for an agent trained in simulation.
+
+## Synthesis Questions (Cross-Chapter)
+
+1. Design a complete ROS 2 system for an autonomous mobile robot that includes:
+   - Sensor processing nodes (Chapter 2)
+   - Agent-based decision making (Chapter 3)
+   - Proper architecture with QoS considerations (Chapter 1)
+
+2. How do the architectural choices in Chapter 1 affect the implementation of nodes, topics, and services in Chapter 2?
+
+3. What architectural considerations from Chapter 1 are important when designing agent-controller interfaces in Chapter 3?
+
+4. Design a safety-critical robotic system using ROS 2 architecture principles that includes agent-based control.
+
+5. Compare the performance and reliability implications of different QoS policies when implementing agent-based control systems.
+
+## Hands-on Projects
+
+1. **Simple Navigation Agent**: Create a Python agent that navigates a robot to a goal using ROS 2 navigation stack. Include sensor processing, decision making, and safety features.
+
+2. **Multi-node System**: Design and implement a multi-node ROS 2 system where different nodes handle perception, planning, and control, with a Python agent coordinating the overall behavior.
+
+3. **Learning Robot**: Implement a basic reinforcement learning agent that learns to perform a simple task (e.g., reaching a goal) with a simulated ROS 2 robot.
+
+4. **Real-time Control**: Design a system that maintains real-time performance while executing agent-based control decisions and processing sensor data.
+
+## Self-Assessment Rubric
+
+Rate your understanding of each concept from 1-5 (5 = expert level):
+
+**Chapter 1:**
+- ROS 2 vs ROS 1 differences: ___/5
+- DDS middleware role: ___/5
+- QoS policies: ___/5
+- Node lifecycle management: ___/5
+- Security architecture: ___/5
+
+**Chapter 2:**
+- Node creation (C++/Python): ___/5
+- Topic communication: ___/5
+- Service communication: ___/5
+- Parameter management: ___/5
+- Debugging tools usage: ___/5
+
+**Chapter 3:**
+- Agent design patterns: ___/5
+- Agent-controller interfaces: ___/5
+- Real-time considerations: ___/5
+- Safety integration: ___/5
+- Learning system integration: ___/5

@@ -1,0 +1,125 @@
+# Exercises and Self-Check Questions - Week 4: Gazebo Simulation
+
+## Chapter 1: Setting Up Gazebo for Humanoid Simulation
+
+### Installation and Configuration
+1. **Installation Process**: List the complete steps required to install Gazebo with ROS 2 integration for humanoid simulation. What are the minimum system requirements?
+
+2. **Environment Verification**: How would you verify that Gazebo is correctly installed and integrated with ROS 2? What test procedures would you follow?
+
+3. **URDF Essentials**: Create a minimal URDF for a 6-DOF leg with proper inertial properties and Gazebo extensions. Include the necessary plugins for ROS 2 control.
+
+4. **Launch Configuration**: Write a launch file that starts Gazebo with your humanoid robot model, including robot state publisher and joint state publisher.
+
+### Humanoid-Specific Setup
+5. **Physics Parameter Tuning**: Given a humanoid model with balance issues, what physics parameters would you adjust to improve stability? Explain your choices.
+
+6. **Multi-Body Dynamics**: How would you configure Gazebo to handle the complex interactions between multiple links in a humanoid robot? What considerations are specific to humanoid systems?
+
+7. **Control Interface**: Set up ROS 2 controllers for a humanoid robot's legs using the joint trajectory controller. How would you configure the controllers in YAML format?
+
+### Advanced Configuration
+8. **Performance Optimization**: Identify three specific strategies to optimize Gazebo simulation performance for a complex humanoid model with 20+ degrees of freedom.
+
+9. **Debugging Exercise**: If a humanoid robot model appears to explode or behave erratically in simulation, what would be your systematic debugging approach?
+
+## Chapter 2: Understanding Gazebo Physics and URDF
+
+### Physics Concepts
+1. **Rigid Body Dynamics**: Explain the relationship between mass, inertia, and motion in Gazebo physics. How do these properties affect humanoid robot simulation?
+
+2. **Inertia Calculations**: Calculate the approximate mass and inertia tensor for a humanoid thigh link that is 40cm long with a 5cm radius and a density that gives it 3.5kg mass.
+
+3. **Time Integration**: Explain the impact of simulation step size on humanoid robot dynamics. Why are smaller step sizes generally needed for stable humanoid simulation?
+
+### URDF Configuration
+4. **Link Definition**: Write the complete URDF definition for a humanoid torso link with appropriate visual, collision, and inertial properties.
+
+5. **Joint Constraints**: Define a spherical joint for a humanoid shoulder with appropriate limits and dynamics. How does this differ from other joint types?
+
+6. **Collision Properties**: Explain the difference between visual and collision geometries in URDF. When might you use different shapes for each?
+
+### Physics Optimization
+7. **Solver Parameters**: Compare the effects of different solver iteration counts (10 vs 100 vs 500) on humanoid simulation stability and performance.
+
+8. **Constraint Parameters**: Explain the role of ERP and CFM parameters in Gazebo physics and how to tune them for humanoid applications.
+
+9. **Real-Time Factor**: How would you configure Gazebo physics to achieve real-time simulation (RTF=1.0) for a complex humanoid robot?
+
+### Troubleshooting
+10. **Stability Analysis**: Identify potential causes of joint jitter or oscillation in a simulated humanoid and propose solutions for each.
+
+## Chapter 3: Simulating Sensors in Gazebo
+
+### Sensor Integration
+1. **IMU Configuration**: Write the Gazebo URDF extensions for an IMU mounted on a humanoid's torso, including realistic noise parameters based on typical IMU specifications.
+
+2. **Camera Setup**: Configure a depth camera sensor for a humanoid robot's head with appropriate resolution, field of view, and noise characteristics for perception tasks.
+
+3. **Force/Torque Sensors**: Set up F/T sensors in both feet of a humanoid robot to enable balance control. Include proper noise modeling.
+
+4. **Joint State Publishing**: Configure the joint state publisher plugin to include all joints of a humanoid robot with appropriate update rates.
+
+### Sensor Processing
+5. **Data Fusion**: Design a basic sensor fusion node that combines IMU data and joint position data to estimate the humanoid's center of mass position.
+
+6. **Noise Analysis**: Given sensor noise parameters, calculate the expected uncertainty in sensor measurements and explain its impact on humanoid control.
+
+7. **Multi-Sensor Coordination**: How would you synchronize data from multiple sensors (IMU, camera, LIDAR) for a humanoid robot? Consider timing and coordinate frame aspects.
+
+### Performance and Optimization
+8. **Update Rate Management**: Design a strategy for different update rates for different sensor types on a humanoid robot (IMU at 400Hz, cameras at 30Hz, etc.).
+
+9. **Computational Efficiency**: Identify three ways to optimize sensor simulation performance for a humanoid robot with 10+ simulated sensors.
+
+### Advanced Topics
+10. **Contact Sensors**: Implement contact sensors for humanoid feet that can detect ground contact and pressure distribution.
+
+11. **Sensor Validation**: Design a method to validate that simulated sensor data has realistic characteristics compared to real hardware.
+
+## Synthesis Questions (Cross-Chapter)
+
+1. **Complete Setup**: Design a complete Gazebo simulation setup for a humanoid robot with 20+ DOF, including: URDF with physics properties, sensor configuration, launch files, and parameter files.
+
+2. **Physics-Sensor Interaction**: How do physics parameters (step size, solver iterations) affect sensor data quality in simulation? Provide specific examples for IMU and force/torque sensors.
+
+3. **Humanoid Control Integration**: How would you integrate the simulated sensors with a humanoid control system that performs balance control? What timing considerations are important?
+
+4. **Performance Trade-offs**: For a humanoid robot performing complex movements, what trade-offs would you make between simulation accuracy, sensor realism, and computational performance?
+
+5. **Validation Strategy**: Design a comprehensive validation approach to ensure your Gazebo simulation with sensors accurately represents the real humanoid robot.
+
+## Practical Projects
+
+1. **Basic Humanoid Simulation**: Create a simple 6-DOF leg model with proper physics and IMU sensor, simulate it in Gazebo, and visualize the sensor data.
+
+2. **Sensor Fusion Project**: Implement a sensor fusion system that combines IMU and joint encoder data to estimate humanoid pose for balance control.
+
+3. **Performance Optimization**: Take a basic humanoid model and optimize it for real-time simulation with multiple sensors active.
+
+4. **Troubleshooting Challenge**: Given a poorly configured humanoid model, identify and fix issues with physics, sensors, and simulation performance.
+
+## Self-Assessment Rubric
+
+Rate your understanding of each concept from 1-5 (5 = expert level):
+
+**Chapter 1:**
+- Gazebo installation and setup: ___/5
+- URDF-Gazebo integration: ___/5
+- Physics configuration: ___/5
+- Launch file creation: ___/5
+- Humanoid-specific considerations: ___/5
+
+**Chapter 2:**
+- Inertial property calculations: ___/5
+- Joint constraint setup: ___/5
+- Physics parameter tuning: ___/5
+- Simulation stability: ___/5
+- Troubleshooting skills: ___/5
+
+**Chapter 3:**
+- Sensor configuration in URDF: ___/5
+- Noise modeling: ___/5
+- Multi-sensor fusion: ___/5
+- Performance optimization: ___/5
+- Data processing: ___/5

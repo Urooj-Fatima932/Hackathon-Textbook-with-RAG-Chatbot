@@ -1,0 +1,130 @@
+# Exercises and Self-Check Questions - Week 6: Advanced Simulation
+
+## Chapter 1: Simulating Complex Multi-Robot Interactions
+
+### Coordination and Communication
+1. **Communication Topologies**: Compare the advantages and disadvantages of centralized, decentralized, and hybrid communication topologies for a team of 10 robots performing area coverage.
+
+2. **Formation Control**: Design a formation control strategy for 6 robots moving in a line formation that can handle one robot failure without breaking the formation.
+
+3. **Collision Avoidance**: Explain the differences between centralized, decentralized, and hybrid collision avoidance approaches. When would you use each one?
+
+4. **Task Allocation**: Describe a market-based auction algorithm for task allocation in a multi-robot system. What are its advantages over round-robin allocation?
+
+### Simulation Architecture
+5. **Architecture Selection**: For a simulation with 50 robots, which simulation architecture (centralized, distributed, or hybrid) would be most appropriate? Justify your answer.
+
+6. **Scalability Analysis**: How would you evaluate the scalability of a multi-robot coordination algorithm as the number of robots increases from 5 to 50?
+
+7. **Failure Modeling**: Design a protocol for reassigning tasks and reconfiguring formations when multiple robots fail simultaneously in a team of 8 robots.
+
+### Performance Evaluation
+8. **Metrics Selection**: Identify 5 key performance metrics for evaluating a multi-robot search and rescue system.
+
+9. **Benchmarking**: How would you design benchmark scenarios to compare different multi-robot coordination strategies?
+
+## Chapter 2: Integrating and Visualizing Multi-Modal Sensor Data
+
+### Sensor Characteristics and Fusion
+1. **Modality Selection**: For an indoor navigation robot, justify the selection of at least 3 sensor modalities and explain how they complement each other.
+
+2. **Fusion Strategy**: Compare data-level, feature-level, and decision-level fusion approaches. When would each be most appropriate?
+
+3. **Synchronization Challenges**: Describe the challenges of synchronizing a camera (30 Hz), LiDAR (10 Hz), and IMU (400 Hz). How would you address them?
+
+4. **Calibration Requirements**: What are the key calibration steps needed to integrate camera, LiDAR, and IMU data from a mobile robot?
+
+### Visualization and Integration
+5. **Visualization Design**: Design a visualization system that can effectively display camera images, LiDAR point clouds, and IMU data simultaneously without information overload.
+
+6. **Uncertainty Representation**: How would you visualize the uncertainty associated with sensor data and fused estimates?
+
+7. **Performance Metrics**: Identify key metrics to evaluate the effectiveness of a multi-modal sensor fusion system.
+
+8. **Real-time Processing**: What computational optimization techniques would you use to achieve real-time multi-modal sensor fusion on an embedded system?
+
+### Applications and Challenges
+9. **Application Analysis**: For a robot performing indoor mapping, describe how different sensor modalities would contribute to the mapping task.
+
+10. **Quality Assessment**: How would you continuously monitor and assess the quality of fused sensor data during robot operation?
+
+## Chapter 3: Debugging and Analyzing Simulation Data
+
+### Debugging Methodology
+1. **Systematic Approach**: Outline a step-by-step methodology for debugging an intermittent physics instability in a multi-robot simulation.
+
+2. **Reproduction Strategy**: How would you design experiments to reproduce non-deterministic simulation failures?
+
+3. **Component Isolation**: Describe how to isolate a problem in a complex simulation involving physics, sensors, and control systems.
+
+4. **Data Validation**: What techniques would you use to validate the integrity of simulation data before analysis?
+
+### Performance Analysis
+5. **Performance Metrics**: Identify key performance metrics for a simulation with 20 robots using multiple sensors each.
+
+6. **Bottleneck Identification**: How would you identify whether physics simulation, sensor processing, or communication is the bottleneck in a multi-robot simulation?
+
+7. **Scalability Testing**: Design a test to evaluate how simulation performance degrades as robot count increases from 1 to 50.
+
+8. **Resource Monitoring**: What tools and techniques would you use to monitor computational resource usage during simulation?
+
+### Validation and Monitoring
+9. **Ground Truth Validation**: How would you validate simulation results when ground truth data is limited or unavailable?
+
+10. **Regression Testing**: Design a regression testing framework for verifying that simulation changes don't break existing functionality.
+
+11. **Logging Strategy**: What data should be logged during multi-robot simulation for effective post-hoc analysis?
+
+### Advanced Analysis
+12. **Statistical Analysis**: How would you apply statistical methods to analyze the reliability of a multi-robot coordination system?
+
+13. **Anomaly Detection**: Design a method to automatically detect anomalous behaviors in simulation logs.
+
+14. **Comparative Analysis**: How would you compare the performance of different coordination algorithms using simulation data?
+
+## Synthesis Questions (Cross-Chapter)
+
+1. **Complete System Analysis**: Design a complete multi-robot simulation system with 10 robots, each equipped with multi-modal sensors. Include coordination strategy, fusion approach, and debugging methodology.
+
+2. **Performance Optimization**: How would you optimize a multi-robot simulation with multi-modal sensors to run in real-time while maintaining accuracy?
+
+3. **Validation Framework**: Create a comprehensive validation framework for a multi-robot system that includes sensor fusion and complex coordination behaviors.
+
+4. **Scalability Challenge**: Analyze the challenges of scaling a validated 5-robot system to 50 robots, considering communication, computation, and coordination issues.
+
+5. **Integration Complexity**: How do the complexities of multi-modal sensor fusion interact with multi-robot coordination, and how does this affect debugging and analysis?
+
+## Practical Scenarios
+
+1. **Warehouse Robots**: Design a simulation and analysis framework for 20 warehouse robots coordinating to move items, including sensor fusion for navigation and collision avoidance.
+
+2. **Search and Rescue**: Create a multi-robot simulation for a search and rescue mission with 8 robots, each with different sensor payloads, and a debugging approach for coordination failures.
+
+3. **Swarm Robotics**: Design analysis tools for a swarm of 100 simple robots performing collective construction tasks.
+
+4. **Human-Robot Teams**: Create a simulation analysis framework for mixed human-robot teams with multi-modal sensing and communication challenges.
+
+## Self-Assessment Rubric
+
+Rate your understanding of each concept from 1-5 (5 = expert level):
+
+**Chapter 1:**
+- Multi-robot coordination strategies: ___/5
+- Communication topologies: ___/5
+- Collision avoidance approaches: ___/5
+- Simulation architecture selection: ___/5
+- Performance evaluation: ___/5
+
+**Chapter 2:**
+- Multi-modal sensor characteristics: ___/5
+- Fusion strategies: ___/5
+- Synchronization techniques: ___/5
+- Visualization methods: ___/5
+- Integration challenges: ___/5
+
+**Chapter 3:**
+- Debugging methodologies: ___/5
+- Performance analysis: ___/5
+- Validation techniques: ___/5
+- Data logging: ___/5
+- Analysis tools: ___/5

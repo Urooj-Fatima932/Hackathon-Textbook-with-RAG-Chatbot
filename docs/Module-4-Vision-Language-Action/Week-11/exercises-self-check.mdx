@@ -1,0 +1,2330 @@
+---
+title: "Implementing the Perception Pipeline"
+sidebar_position: 3
+---
+
+# Implementing the Perception Pipeline
+
+## Learning Objectives
+
+By the end of this chapter, you should be able to:
+- Design and implement a comprehensive perception pipeline for humanoid robots
+- Integrate multiple sensor modalities in a unified perception system
+- Implement computer vision algorithms for environmental understanding
+- Apply sensor fusion techniques for robust perception
+- Optimize perception algorithms for real-time humanoid operation
+- Validate perception system performance in simulation and reality
+- Handle perception failures and edge cases gracefully
+
+## Introduction to Humanoid Perception Systems
+
+Perception forms the foundation of intelligent robotic behavior, enabling robots to understand and interact with their environment. For humanoid robots, perception systems must be particularly robust and versatile, as these robots operate in complex human environments and must perceive the world in ways that align with human expectations and safety requirements. The perception pipeline processes raw sensor data to extract meaningful information that enables navigation, manipulation, interaction, and decision-making capabilities.
+
+The complexity of humanoid perception stems from the need to process diverse sensor modalities simultaneously while maintaining real-time performance. Unlike simpler robots with limited sensing capabilities, humanoid robots typically incorporate cameras, LiDAR, IMU, force/torque sensors, and other modalities that must work together to create a coherent understanding of the environment. This fused understanding enables the robot to perform complex tasks like walking through crowded spaces, manipulating objects in cluttered environments, and interacting safely with humans.
+
+The perception pipeline must also handle the challenges inherent in humanoid environments: dynamic obstacles, varying lighting conditions, complex cluttered scenes, and the need for high safety standards. The perception system serves as the robot's "eyes and ears," and its reliability directly impacts the robot's ability to operate safely and effectively in human environments.
+
+## Architecture of Humanoid Perception Systems
+
+### Multi-Modal Sensor Integration
+
+Humanoid robots require integration of diverse sensor modalities for comprehensive environmental awareness:
+
+**Primary Sensors**:
+- **RGB-D Cameras**: Provide color, depth, and spatial information
+- **LiDAR Units**: Offer precise distance measurements and 3D mapping
+- **IMU Sensors**: Provide orientation and acceleration data
+- **Force/Torque Sensors**: Enable tactile perception and interaction feedback
+- **Microphones**: Enable auditory perception and speech recognition
+
+**Sensor Characteristics**:
+- **Sample rates**: Different sensors operate at different frequencies
+- **Field of view**: Various coverage areas and distances
+- **Accuracy and precision**: Different error characteristics
+- **Environmental sensitivity**: Different responses to environmental conditions
+
+### Distributed Perception Architecture
+
+Modern humanoid perception systems use distributed architectures for efficiency:
+
+**On-Board Processing**:
+- **Edge computing**: Local processing for real-time requirements
+- **GPU acceleration**: Graphics processing for computer vision tasks
+- **Specialized chips**: AI-optimized processors for machine learning tasks
+- **Low-latency processing**: Immediate sensor processing requirements
+
+**Cloud Integration**:
+- **Heavy computation**: Complex analysis for non-real-time tasks
+- **Learning and adaptation**: Machine learning model updates
+- **Data processing**: Large-scale data analysis and storage
+- **Resource sharing**: Sharing computational load across systems
+
+### Perception Data Flow
+
+Understanding the flow of information through the perception system:
+
+**Raw Data Acquisition**:
+- **Synchronization**: Coordinating data capture across sensors
+- **Timestamp management**: Associating data with precise timing
+- **Data integrity**: Ensuring data quality and completeness
+- **Storage management**: Buffering and managing incoming data
+
+**Preprocessing Pipeline**:
+- **Calibration**: Correcting for sensor-specific characteristics
+- **Noise reduction**: Filtering and cleaning raw sensor data
+- **Data registration**: Aligning data from different sensors
+- **Format conversion**: Standardizing data formats for processing
+
+**Feature Extraction**:
+- **Low-level features**: Edges, corners, textures, and basic patterns
+- **Mid-level features**: Objects, surfaces, and spatial relationships
+- **High-level features**: Semantic understanding and scene interpretation
+- **Contextual features**: Environmental context and situational awareness
+
+## Computer Vision for Humanoid Robots
+
+### Object Detection and Recognition
+
+Detecting and identifying objects in the environment:
+
+**Deep Learning Approaches**:
+- **YOLO (You Only Look Once)**: Real-time object detection with good speed-accuracy balance
+- **Faster R-CNN**: High accuracy detection with region proposal networks
+- **SSD (Single Shot Detector)**: Efficient multi-scale object detection
+- **Vision Transformers**: Transformer-based models for generalizable vision
+
+```python
+# Example: Real-time object detection for humanoid robot
+import torch
+import cv2
+import numpy as np
+from ultralytics import YOLO
+
+class HumanoidObjectDetector:
+    def __init__(self, model_path="yolo_humanoid.pt"):
+        self.model = YOLO(model_path)
+        self.confidence_threshold = 0.5
+        self.object_classes = self.load_object_classes()
+        
+    def load_object_classes(self):
+        # Load classes relevant for humanoid interaction
+        return {
+            0: "person", 1: "chair", 2: "table", 3: "couch", 
+            4: "bottle", 5: "cup", 6: "fork", 7: "knife", 
+            8: "spoon", 9: "bowl", 10: "book", 11: "laptop"
+        }
+    
+    def detect_objects(self, image):
+        """Detect objects in a single image frame."""
+        results = self.model(image, conf=self.confidence_threshold)
+        
+        detected_objects = []
+        for result in results:
+            boxes = result.boxes.xyxy.cpu().numpy()  # x1, y1, x2, y2
+            confidences = result.boxes.conf.cpu().numpy()
+            class_ids = result.boxes.cls.cpu().numpy().astype(int)
+            
+            for i in range(len(boxes)):
+                box = boxes[i]
+                confidence = confidences[i]
+                class_id = class_ids[i]
+                
+                if class_id in self.object_classes:
+                    obj_info = {
+                        'class': self.object_classes[class_id],
+                        'bbox': box,
+                        'confidence': confidence,
+                        'center': ((box[0] + box[2])/2, (box[1] + box[3])/2),
+                        'area': (box[2] - box[0]) * (box[3] - box[1])
+                    }
+                    detected_objects.append(obj_info)
+        
+        return detected_objects
+    
+    def annotate_image(self, image, detections):
+        """Annotate image with detection results."""
+        annotated = image.copy()
+        
+        for obj in detections:
+            bbox = obj['bbox']
+            class_name = obj['class']
+            confidence = obj['confidence']
+            
+            # Draw bounding box
+            cv2.rectangle(annotated, (int(bbox[0]), int(bbox[1])), 
+                         (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
+            
+            # Add label
+            label = f"{class_name}: {confidence:.2f}"
+            cv2.putText(annotated, label, (int(bbox[0]), int(bbox[1])-10),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        
+        return annotated
+
+class ObjectTracker:
+    def __init__(self):
+        self.tracker = cv2.legacy_TrackerCSRT_create()  # or other trackers
+        self.active_trackers = {}
+        self.next_id = 0
+        
+    def initialize_trackers(self, image, detections):
+        """Initialize trackers for detected objects."""
+        self.reset_trackers()
+        
+        for i, detection in enumerate(detections):
+            bbox = detection['bbox']
+            tracker_id = f"obj_{self.next_id}"
+            
+            # Initialize tracker with bounding box
+            success = self.tracker.init(image, (int(bbox[0]), int(bbox[1]), 
+                                              int(bbox[2]-bbox[0]), int(bbox[3]-bbox[1])))
+            
+            if success:
+                self.active_trackers[tracker_id] = {
+                    'tracker': self.tracker,
+                    'class': detection['class'],
+                    'confidence': detection['confidence'],
+                    'last_update': 0
+                }
+                self.next_id += 1
+    
+    def update_tracking(self, image):
+        """Update all active trackers."""
+        tracked_objects = []
+        
+        for obj_id, tracker_info in self.active_trackers.items():
+            success, bbox = tracker_info['tracker'].update(image)
+            
+            if success:
+                obj_info = {
+                    'id': obj_id,
+                    'bbox': np.array([bbox[0], bbox[1], 
+                                    bbox[0] + bbox[2], bbox[1] + bbox[3]]),
+                    'class': tracker_info['class'],
+                    'confidence': tracker_info['confidence']
+                }
+                tracked_objects.append(obj_info)
+            else:
+                # Remove failed tracker
+                del self.active_trackers[obj_id]
+        
+        return tracked_objects
+```
+
+### 3D Object Understanding
+
+Extending object detection to three-dimensional understanding:
+
+**Depth-Based Understanding**:
+```python
+import open3d as o3d
+import numpy as np
+
+class DepthBasedObjectUnderstanding:
+    def __init__(self):
+        self.camera_intrinsics = {
+            'fx': 554.25,  # Focal length x
+            'fy': 554.25,  # Focal length y
+            'cx': 320.5,   # Principal point x
+            'cy': 240.5    # Principal point y
+        }
+        
+    def depth_to_pointcloud(self, depth_image, rgb_image=None):
+        """Convert depth image to 3D point cloud."""
+        height, width = depth_image.shape
+        
+        # Create coordinate grids
+        x = np.linspace(0, width-1, width)
+        y = np.linspace(0, height-1, height)
+        xx, yy = np.meshgrid(x, y)
+        
+        # Convert pixel coordinates to 3D coordinates
+        z = depth_image
+        x_3d = (xx - self.camera_intrinsics['cx']) * z / self.camera_intrinsics['fx']
+        y_3d = (yy - self.camera_intrinsics['cy']) * z / self.camera_intrinsics['fy']
+        
+        # Stack to create point cloud
+        points = np.stack([x_3d, y_3d, z], axis=-1).reshape(-1, 3)
+        
+        # Remove invalid points
+        valid_mask = points[:, 2] > 0  # Remove points with invalid depth
+        points = points[valid_mask]
+        
+        if rgb_image is not None:
+            colors = rgb_image.reshape(-1, 3)[valid_mask] / 255.0
+            return points, colors
+        else:
+            return points
+    
+    def segment_objects_in_pointcloud(self, pointcloud, color_image=None):
+        """Segment objects in 3D point cloud."""
+        # Convert to Open3D point cloud
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(pointcloud)
+        
+        if color_image is not None:
+            pcd.colors = o3d.utility.Vector3dVector(color_image)
+        
+        # Apply voxel downsampling for efficiency
+        pcd_downsampled = pcd.voxel_down_sample(voxel_size=0.01)
+        
+        # Extract planar surfaces (floor, walls, tables)
+        plane_model, inliers = pcd_downsampled.segment_plane(
+            distance_threshold=0.02,
+            ransac_n=3,
+            num_iterations=1000
+        )
+        
+        # Extract table-like surfaces (horizontal planes)
+        table_indices = self.filter_horizontal_planes(inliers, plane_model)
+        table_points = np.asarray(pcd_downsampled.points)[table_indices]
+        
+        # Remove planar surfaces to focus on objects
+        object_cloud = pcd_downsampled.select_by_index(inliers, invert=True)
+        
+        # Cluster remaining points into objects
+        cluster_labels = np.array(object_cloud.cluster_dbscan(
+            eps=0.05, min_points=10
+        ))
+        
+        # Group points by cluster (object)
+        objects = []
+        for cluster_id in set(cluster_labels):
+            if cluster_id == -1:  # Skip noise points
+                continue
+                
+            cluster_points = np.asarray(object_cloud.points)[cluster_labels == cluster_id]
+            
+            # Calculate object properties
+            obj_center = np.mean(cluster_points, axis=0)
+            obj_size = np.max(cluster_points, axis=0) - np.min(cluster_points, axis=0)
+            obj_volume = np.prod(obj_size)
+            
+            objects.append({
+                'center': obj_center,
+                'size': obj_size,
+                'volume': obj_volume,
+                'points': cluster_points,
+                'num_points': len(cluster_points)
+            })
+        
+        return objects, table_points
+    
+    def filter_horizontal_planes(self, plane_indices, plane_model):
+        """Filter to keep only horizontal planes (tables, floors)."""
+        # Plane model: [a, b, c, d] where ax + by + cz + d = 0
+        # For horizontal plane, normal vector should be close to (0, 0, 1)
+        a, b, c, d = plane_model
+        normal = np.array([a, b, c])
+        normal_unit = normal / np.linalg.norm(normal)
+        
+        # Check if normal is close to z-axis (horizontal plane)
+        dot_product = abs(np.dot(normal_unit, [0, 0, 1]))
+        
+        if dot_product > 0.8:  # Close to horizontal
+            return plane_indices
+        else:
+            return []
+    
+    def estimate_object_poses(self, objects):
+        """Estimate poses for detected objects."""
+        object_poses = []
+        
+        for obj in objects:
+            # Estimate object pose using principal component analysis
+            points = obj['points']
+            centroid = obj['center']
+            
+            # Compute covariance matrix
+            centered_points = points - centroid
+            cov_matrix = np.cov(centered_points.T)
+            
+            # Get principal axes (eigenvectors)
+            eigenvalues, eigenvectors = np.linalg.eig(cov_matrix)
+            
+            # Sort by eigenvalues (largest first)
+            idx = np.argsort(eigenvalues)[::-1]
+            eigenvalues = eigenvalues[idx]
+            eigenvectors = eigenvectors[:, idx]
+            
+            # Ensure right-handed coordinate system
+            if np.linalg.det(eigenvectors) < 0:
+                eigenvectors[:, 2] *= -1
+            
+            # Create rotation matrix and pose
+            rotation_matrix = eigenvectors
+            quaternion = self.rotation_matrix_to_quaternion(rotation_matrix)
+            
+            pose = {
+                'position': centroid,
+                'orientation': quaternion,
+                'scale': np.sqrt(eigenvalues)  # Size estimates
+            }
+            
+            object_poses.append(pose)
+        
+        return object_poses
+    
+    def rotation_matrix_to_quaternion(self, rotation_matrix):
+        """Convert rotation matrix to quaternion."""
+        # Using the algorithm from:
+        # https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
+        trace = np.trace(rotation_matrix)
+        
+        if trace > 0:
+            s = np.sqrt(trace + 1.0) * 2  # s = 4 * qw
+            qw = 0.25 * s
+            qx = (rotation_matrix[2, 1] - rotation_matrix[1, 2]) / s
+            qy = (rotation_matrix[0, 2] - rotation_matrix[2, 0]) / s
+            qz = (rotation_matrix[1, 0] - rotation_matrix[0, 1]) / s
+        else:
+            if rotation_matrix[0, 0] > rotation_matrix[1, 1] and rotation_matrix[0, 0] > rotation_matrix[2, 2]:
+                s = np.sqrt(1.0 + rotation_matrix[0, 0] - rotation_matrix[1, 1] - rotation_matrix[2, 2]) * 2
+                qw = (rotation_matrix[2, 1] - rotation_matrix[1, 2]) / s
+                qx = 0.25 * s
+                qy = (rotation_matrix[0, 1] + rotation_matrix[1, 0]) / s
+                qz = (rotation_matrix[0, 2] + rotation_matrix[2, 0]) / s
+            elif rotation_matrix[1, 1] > rotation_matrix[2, 2]:
+                s = np.sqrt(1.0 + rotation_matrix[1, 1] - rotation_matrix[0, 0] - rotation_matrix[2, 2]) * 2
+                qw = (rotation_matrix[0, 2] - rotation_matrix[2, 0]) / s
+                qx = (rotation_matrix[0, 1] + rotation_matrix[1, 0]) / s
+                qy = 0.25 * s
+                qz = (rotation_matrix[1, 2] + rotation_matrix[2, 1]) / s
+            else:
+                s = np.sqrt(1.0 + rotation_matrix[2, 2] - rotation_matrix[0, 0] - rotation_matrix[1, 1]) * 2
+                qw = (rotation_matrix[1, 0] - rotation_matrix[0, 1]) / s
+                qx = (rotation_matrix[0, 2] + rotation_matrix[2, 0]) / s
+                qy = (rotation_matrix[1, 2] + rotation_matrix[2, 1]) / s
+                qz = 0.25 * s
+        
+        return np.array([qx, qy, qz, qw])
+```
+
+### Scene Understanding and Segmentation
+
+Advanced methods for understanding complex scenes:
+
+**Semantic Segmentation**:
+```python
+import torch
+import torch.nn as nn
+import torchvision.transforms as transforms
+import cv2
+
+class SceneUnderstanding:
+    def __init__(self, model_path="deeplabv3_resnet101_coco.pth"):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model = self.load_segmentation_model(model_path)
+        self.transform = self.setup_transforms()
+        self.semantic_classes = self.load_semantic_classes()
+    
+    def load_segmentation_model(self, path):
+        """Load pretrained semantic segmentation model."""
+        # Using DeepLabV3 with ResNet backbone for scene understanding
+        model = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet101', 
+                              pretrained=True)
+        model.eval()
+        model.to(self.device)
+        return model
+    
+    def setup_transforms(self):
+        """Setup input transforms for the model."""
+        return transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize((513, 513)),  # Standard size for DeepLab
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                               std=[0.229, 0.224, 0.225])
+        ])
+    
+    def load_semantic_classes(self):
+        """Load semantic class names."""
+        # COCO dataset class names
+        return [
+            "__background__", "person", "bicycle", "car", "motorcycle", "airplane", 
+            "bus", "train", "truck", "boat", "traffic light", "fire hydrant", 
+            "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", 
+            "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", 
+            "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", 
+            "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", 
+            "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", 
+            "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", 
+            "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", 
+            "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", 
+            "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", 
+            "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", 
+            "teddy bear", "hair drier", "toothbrush"
+        ]
+    
+    def semantic_segment_image(self, image):
+        """Perform semantic segmentation on image."""
+        # Preprocess image
+        input_tensor = self.transform(image).unsqueeze(0).to(self.device)
+        
+        # Run inference
+        with torch.no_grad():
+            output = self.model(input_tensor)['out'][0]
+            output_predictions = output.argmax(0).cpu().numpy()
+        
+        # Convert to color image
+        segmented_image = self.colorize_segmentation(output_predictions)
+        
+        # Extract semantic information
+        semantic_info = self.extract_semantic_info(output_predictions)
+        
+        return segmented_image, semantic_info
+    
+    def colorize_segmentation(self, segmentation_mask):
+        """Convert segmentation mask to color image."""
+        # Generate color map
+        palette = self.generate_color_palette(len(self.semantic_classes))
+        
+        # Reshape mask and map to colors
+        color_map = np.array(palette).reshape((-1, 3))
+        color_image = color_map[segmentation_mask.ravel()].reshape(
+            segmentation_mask.shape + (3,)
+        ).astype(np.uint8)
+        
+        return color_image
+    
+    def extract_semantic_info(self, segmentation_mask):
+        """Extract semantic information from segmentation."""
+        semantic_objects = []
+        
+        for class_id in range(1, len(self.semantic_classes)):  # Skip background
+            class_mask = (segmentation_mask == class_id)
+            nonzero_coords = np.nonzero(class_mask)
+            
+            if len(nonzero_coords[0]) > 0:  # If object of this class exists
+                y_coords, x_coords = nonzero_coords
+                
+                obj_info = {
+                    'class': self.semantic_classes[class_id],
+                    'class_id': class_id,
+                    'bbox': [int(x_coords.min()), int(y_coords.min()), 
+                            int(x_coords.max()), int(y_coords.max())],
+                    'centroid': [int(np.mean(x_coords)), int(np.mean(y_coords))],
+                    'pixel_count': len(x_coords)
+                }
+                semantic_objects.append(obj_info)
+        
+        return semantic_objects
+    
+    def generate_color_palette(self, num_colors):
+        """Generate distinct colors for different classes."""
+        palette = []
+        np.random.seed(42)  # For reproducibility
+        
+        for i in range(num_colors):
+            # Generate distinct colors using HSV space
+            hue = i * 360.0 / num_colors
+            saturation = 0.7 + (i % 3) * 0.1
+            value = 0.8 + (i % 2) * 0.2
+            
+            # Convert HSV to RGB
+            hsv = np.uint8([[[hue, saturation * 255, value * 255]]])
+            rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB).flatten()
+            palette.extend(rgb.tolist())
+        
+        return palette
+```
+
+## SLAM and Localization
+
+### Simultaneous Localization and Mapping
+
+SLAM is crucial for humanoid robots operating in unknown environments:
+
+```python
+import numpy as np
+import open3d as o3d
+from scipy.spatial.transform import Rotation as R
+import gtsam
+
+class HumanoidSLAM:
+    def __init__(self, voxel_size=0.1, max_correspondence_distance=0.2):
+        self.voxel_size = voxel_size
+        self.max_correspondence_distance = max_correspondence_distance
+        self.pose_graph = gtsam.NonlinearFactorGraph()
+        self.initial_estimate = gtsam.Values()
+        
+        # Initialize pose and map
+        self.current_pose = np.eye(4)  # 4x4 homogeneous transformation
+        self.global_map = o3d.geometry.PointCloud()
+        self.keyframes = []
+        self.frame_poses = []
+        
+    def estimate_pose_from_odometry(self, prev_pose, prev_pcd, curr_pcd):
+        """Estimate pose change using point cloud registration."""
+        # Downsample point clouds for efficiency
+        prev_ds = prev_pcd.voxel_down_sample(voxel_size=self.voxel_size)
+        curr_ds = curr_pcd.voxel_down_sample(voxel_size=self.voxel_size)
+        
+        # Initial alignment using FPFH descriptors
+        prev_fpfh = self.compute_fpfh_features(prev_ds)
+        curr_fpfh = self.compute_fpfh_features(curr_ds)
+        
+        # Initial rough registration
+        initial_transformation = self.estimate_initial_transformation(
+            prev_ds, curr_ds, prev_fpfh, curr_fpfh
+        )
+        
+        # Refine alignment using ICP
+        icp_result = o3d.pipelines.registration.registration_icp(
+            source=curr_ds,
+            target=prev_ds,
+            max_correspondence_distance=self.max_correspondence_distance,
+            estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+            criteria=o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=200)
+        )
+        
+        return icp_result.transformation
+    
+    def compute_fpfh_features(self, pcd):
+        """Compute Fast Point Feature Histograms."""
+        radius_normal = self.voxel_size * 2
+        pcd.estimate_normals(
+            o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30)
+        )
+        
+        radius_feature = self.voxel_size * 5
+        fpfh = o3d.pipelines.registration.compute_fpfh_feature(
+            pcd,
+            o3d.geometry.KDTreeSearchParamHybrid(radius=radius_feature, max_nn=100)
+        )
+        
+        return fpfh
+    
+    def estimate_initial_transformation(self, pcd1, pcd2, fpfh1, fpfh2):
+        """Estimate initial transformation using FPFH."""
+        result = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+            pcd1, pcd2, fpfh1, fpfh2,
+            max_correspondence_distance=self.max_correspondence_distance,
+            estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+            ransac_n=4,
+            criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(4000000, 500)
+        )
+        
+        return result.transformation
+    
+    def update_graph_slam(self, new_pose, new_pointcloud):
+        """Update pose graph with new measurements."""
+        # Add to global map
+        transformed_pc = new_pointcloud.transform(new_pose)
+        self.global_map += transformed_pc
+        
+        # Add to keyframes if significant movement
+        if len(self.keyframes) == 0 or self.is_significant_movement(new_pose):
+            self.keyframes.append({
+                'pose': new_pose,
+                'pointcloud': transformed_pc,
+                'timestamp': len(self.keyframes)  # Simulated timestamp
+            })
+        
+        # Add to pose graph
+        current_idx = len(self.frame_poses)
+        self.frame_poses.append(new_pose)
+        
+        # Add odometry factor
+        if current_idx > 0:
+            prev_pose = self.frame_poses[current_idx - 1]
+            relative_transform = np.linalg.inv(prev_pose) @ new_pose
+            
+            # Add odometry measurement factor (simplified)
+            noise_model = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.1, 0.1, 0.1, 0.05, 0.05, 0.05]))
+            
+            # This is a simplified odometry factor
+            factor = gtsam.BetweenFactorPose3(
+                current_idx - 1, current_idx,
+                gtsam.Pose3(relative_transform),
+                noise_model
+            )
+            
+            self.pose_graph.add(factor)
+    
+    def is_significant_movement(self, new_pose):
+        """Determine if movement warrants adding a new keyframe."""
+        if len(self.keyframes) == 0:
+            return True
+        
+        last_pose = self.keyframes[-1]['pose']
+        translation_diff = np.linalg.norm(
+            new_pose[:3, 3] - last_pose[:3, 3]
+        )
+        rotation_diff = np.arccos(
+            np.clip((np.trace(new_pose[:3, :3].T @ last_pose[:3, :3]) - 1) / 2, -1, 1)
+        )
+        
+        # Thresholds for significant movement (adjustable)
+        return translation_diff > 0.5 or rotation_diff > 0.2  # 50cm or 11.5 degrees
+    
+    def optimize_pose_graph(self):
+        """Optimize the pose graph using GTSAM."""
+        # Create optimizer
+        params = gtsam.GaussNewtonParams()
+        optimizer = gtsam.GaussNewtonOptimizer(self.pose_graph, self.initial_estimate, params)
+        
+        try:
+            result = optimizer.optimize()
+            return result
+        except:
+            print("Pose graph optimization failed")
+            return None
+    
+    def get_current_map(self):
+        """Return the current map with all registered point clouds."""
+        # Remove duplicates using voxel grid
+        filtered_map = self.global_map.voxel_down_sample(voxel_size=0.05)
+        return filtered_map
+    
+    def get_global_pose(self):
+        """Return the current estimated global pose."""
+        return self.current_pose
+```
+
+### Visual-Inertial Odometry
+
+Combining visual and inertial information for robust localization:
+
+```python
+import numpy as np
+from scipy.spatial.transform import Rotation as R
+from filterpy.kalman import ExtendedKalmanFilter
+from filterpy.common.discretization import Q_discrete_white_noise
+
+class VisualInertialOdometry:
+    def __init__(self, process_noise_std=0.1, measurement_noise_std=0.05):
+        # Initialize EKF for VI-ODOM
+        self.ekf = ExtendedKalmanFilter(dim_x=15, dim_z=6)  # 15 state vars, 6 meas vars
+        
+        # State: [p_x, p_y, p_z, v_x, v_y, v_z, q_w, q_x, q_y, q_z, b_a_x, b_a_y, b_a_z, b_w_x, b_w_y, b_w_z]
+        # Measurements: [acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z]
+        
+        self.process_noise_std = process_noise_std
+        self.measurement_noise_std = measurement_noise_std
+        
+        # Initialize state and covariance
+        self.ekf.x = np.zeros(15)  # Initial state (rest)
+        self.ekf.P *= 1.0  # Initial uncertainty
+        
+        # Process noise (Q) - accounts for model inaccuracies
+        self.ekf.Q = np.eye(15) * self.process_noise_std**2
+        
+        # Measurement noise (R) - accounts for sensor noise
+        self.ekf.R = np.eye(6) * self.measurement_noise_std**2
+        
+        # Measurement matrix (H) for direct measurement
+        self.ekf.H = np.zeros((6, 15))
+        self.ekf.H[0:3, 3:6] = np.eye(3)  # Velocity to acceleration
+        self.ekf.H[3:6, 6:9] = np.eye(3)  # Angular velocity
+        
+    def predict(self, dt, accel, gyro):
+        """Prediction step using IMU measurements."""
+        # Update state transition matrix based on current state
+        self.ekf.F = self.compute_state_transition_matrix(dt, gyro)
+        
+        # Control input affects state
+        control_input = self.compute_control_input(accel, gyro)
+        self.ekf.predict(u=control_input)
+    
+    def update(self, measured_accel, measured_gyro):
+        """Update step with IMU measurements."""
+        # Measurement vector
+        z = np.concatenate([measured_accel, measured_gyro])
+        self.ekf.update(z)
+    
+    def compute_state_transition_matrix(self, dt, gyro):
+        """Compute state transition matrix for prediction."""
+        F = np.eye(15)
+        
+        # Position derivatives
+        F[0:3, 3:6] = np.eye(3) * dt  # p = p + v*dt
+        
+        # Orientation derivatives (quaternion integration)
+        omega_skew = self.skew_symmetric_matrix(gyro)
+        F[6:10, 6:10] = np.eye(4) + self.quaternion_derivative_matrix(gyro) * dt
+        
+        # Bias derivatives (random walk model)
+        # Accelerometer bias changes slowly
+        F[10:13, 10:13] = np.eye(3)  # Biases are constant in model
+        
+        # Gyroscope bias changes slowly  
+        F[13:15, 13:15] = np.eye(2)  # Biases are constant in model
+        
+        return F
+    
+    def skew_symmetric_matrix(self, vec):
+        """Create skew-symmetric matrix from 3D vector."""
+        return np.array([
+            [0, -vec[2], vec[1]],
+            [vec[2], 0, -vec[0]],
+            [-vec[1], vec[0], 0]
+        ])
+    
+    def quaternion_derivative_matrix(self, omega):
+        """Quaternion derivative matrix."""
+        wx, wy, wz = omega
+        
+        return 0.5 * np.array([
+            [0, -wx, -wy, -wz],
+            [wx, 0, wz, -wy],
+            [wy, -wz, 0, wx],
+            [wz, wy, -wx, 0]
+        ])
+    
+    def compute_control_input(self, accel, gyro):
+        """Compute control input for state prediction."""
+        # For VI-ODOM, IMU measurements are used as control input
+        # This is a simplified model
+        u = np.zeros(15)
+        
+        # Acceleration affects velocity
+        u[3:6] = accel
+        
+        # Gyro affects orientation
+        u[6:9] = gyro
+        
+        return u
+    
+    def get_pose_estimate(self):
+        """Return current pose estimate."""
+        pos = self.ekf.x[0:3]
+        quat = self.ekf.x[6:9]  # Simplified quaternion to 3D
+        # Convert to proper quaternion
+        qw = np.sqrt(1 - np.sum(quat**2)) if np.sum(quat**2) < 1 else 0
+        orientation = np.array([qw, quat[0], quat[1], quat[2]])
+        
+        return pos, orientation
+
+class MultiSensorFusion:
+    def __init__(self):
+        self.vio = VisualInertialOdometry()
+        self.localization_map = {}
+        self.confidence_scores = {}
+    
+    def fusion_step(self, camera_data, imu_data, lidar_data, timestamp):
+        """Perform multi-sensor fusion at each step."""
+        # Process IMU data through VIO
+        pos_vio, orient_vio = self.vio.get_pose_estimate()
+        
+        # Process camera data for visual features
+        visual_features = self.process_camera_features(camera_data)
+        
+        # Process LiDAR data for geometric information
+        lidar_pos = self.process_lidar_localization(lidar_data)
+        
+        # Fuse all information
+        fused_pos, fused_orient = self.fuse_estimates(
+            pos_vio, orient_vio, visual_features, lidar_pos
+        )
+        
+        # Update confidence based on consistency
+        self.update_confidence(fused_pos, fused_orient)
+        
+        return fused_pos, fused_orient
+    
+    def process_camera_features(self, camera_data):
+        """Process camera data for feature-based localization."""
+        # This would implement visual odometry using camera data
+        # Extract features, match across frames, triangulate
+        pass
+    
+    def process_lidar_localization(self, lidar_data):
+        """Process LiDAR data for localization against map."""
+        # This would implement LiDAR-based localization
+        # Match point cloud against global map
+        pass
+    
+    def fuse_estimates(self, pos_vio, orient_vio, visual_features, lidar_pos):
+        """Fuse different pose estimates with Kalman filtering."""
+        # Implement Kalman filter fusion
+        # Weight different sensors by their noise characteristics
+        pass
+    
+    def update_confidence(self, pos, orient):
+        """Update confidence in pose estimate."""
+        # This would update based on sensor consistency
+        pass
+```
+
+## Sensor Fusion Techniques
+
+### Extended Kalman Filtering for Humanoid Perception
+
+Advanced sensor fusion using Kalman filtering:
+
+```python
+import numpy as np
+from scipy.linalg import block_diag
+
+class HumanoidSensorFusion:
+    def __init__(self, dt=0.01):
+        self.dt = dt
+        
+        # State vector: [x, y, z, roll, pitch, yaw, vx, vy, vz, wx, wy, wz, ax, ay, az]
+        self.n_states = 15
+        self.state = np.zeros(self.n_states)
+        
+        # Initialize covariance matrix
+        self.P = np.eye(self.n_states) * 0.1
+        
+        # Initialize Kalman filter matrices
+        self.F = self.initialize_state_transition_matrix()
+        self.H = self.initialize_measurement_matrix()
+        self.Q = self.initialize_process_noise()
+        self.R = self.initialize_measurement_noise()
+    
+    def initialize_state_transition_matrix(self):
+        """Initialize state transition matrix."""
+        F = np.eye(self.n_states)
+        
+        # Position updates from velocity
+        F[0:3, 6:9] = np.eye(3) * self.dt
+        
+        # Velocity updates from acceleration (with gravity compensation)
+        # Simplified model - in practice, would account for orientation
+        F[6:9, 12:15] = np.eye(3) * self.dt
+        
+        return F
+    
+    def initialize_measurement_matrix(self):
+        """Initialize measurement matrix."""
+        # This depends on what measurements are available
+        # For now, assume we measure position, orientation, and velocity
+        H = np.zeros((9, self.n_states))
+        
+        # Measure position (x, y, z)
+        H[0:3, 0:3] = np.eye(3)
+        
+        # Measure orientation (roll, pitch, yaw) 
+        H[3:6, 3:6] = np.eye(3)
+        
+        # Measure velocity (vx, vy, vz)
+        H[6:9, 6:9] = np.eye(3)
+        
+        return H
+    
+    def initialize_process_noise(self):
+        """Initialize process noise matrix."""
+        Q = np.eye(self.n_states)
+        
+        # Higher noise for acceleration terms
+        Q[12:15, 12:15] *= 0.1  # Acceleration process noise
+        Q[6:9, 6:9] *= 0.05    # Velocity process noise
+        Q[0:3, 0:3] *= 0.01    # Position process noise
+        
+        return Q * 0.01
+    
+    def initialize_measurement_noise(self):
+        """Initialize measurement noise matrix."""
+        R = np.eye(9)
+        
+        # Measurement noise for different sensors
+        R[0:3, 0:3] *= 0.01   # Position measurement noise
+        R[3:6, 3:6] *= 0.005  # Orientation measurement noise 
+        R[6:9, 6:9] *= 0.02   # Velocity measurement noise
+        
+        return R
+    
+    def predict(self):
+        """Prediction step of the Kalman filter."""
+        # Predict state: x = F * x
+        self.state = self.F @ self.state
+        
+        # Predict covariance: P = F * P * F^T + Q
+        self.P = self.F @ self.P @ self.F.T + self.Q
+    
+    def update(self, measurements):
+        """Update step of the Kalman filter."""
+        # Innovation: y = z - H * x
+        innovation = measurements - self.H @ self.state
+        
+        # Innovation covariance: S = H * P * H^T + R
+        S = self.H @ self.P @ self.H.T + self.R
+        
+        # Kalman gain: K = P * H^T * S^(-1)
+        K = self.P @ self.H.T @ np.linalg.inv(S)
+        
+        # Update state: x = x + K * y
+        self.state = self.state + K @ innovation
+        
+        # Update covariance: P = (I - K * H) * P
+        I_KH = np.eye(self.n_states) - K @ self.H
+        self.P = I_KH @ self.P
+    
+    def add_sensor_measurement(self, sensor_type, measurement, timestamp):
+        """Add a measurement from a specific sensor."""
+        # Convert sensor measurement to appropriate format
+        processed_measurement = self.process_sensor_measurement(sensor_type, measurement)
+        
+        # Update the filter with the measurement
+        self.update(processed_measurement)
+    
+    def process_sensor_measurement(self, sensor_type, measurement):
+        """Process measurement from different sensor types."""
+        if sensor_type == "camera":
+            # Process camera measurement (feature positions, etc.)
+            return self.process_camera_measurement(measurement)
+        elif sensor_type == "lidar":
+            # Process LiDAR measurement (position, obstacles, etc.)
+            return self.process_lidar_measurement(measurement) 
+        elif sensor_type == "imu":
+            # Process IMU measurement (orientation, acceleration, etc.)
+            return self.process_imu_measurement(measurement)
+        elif sensor_type == "force_torque":
+            # Process force/torque measurement
+            return self.process_force_torque_measurement(measurement)
+        else:
+            raise ValueError(f"Unknown sensor type: {sensor_type}")
+    
+    def process_camera_measurement(self, measurement):
+        """Process camera-based measurements."""
+        # This would convert image features to world coordinates
+        # based on camera calibration and current pose estimate
+        pass
+    
+    def process_lidar_measurement(self, measurement):
+        """Process LiDAR-based measurements."""
+        # This would convert point cloud to positional measurements
+        pass
+    
+    def process_imu_measurement(self, measurement):
+        """Process IMU-based measurements."""
+        # IMU typically provides acceleration and angular velocity
+        # which would be processed differently in the filter
+        pass
+    
+    def process_force_torque_measurement(self, measurement):
+        """Process force/torque-based measurements."""
+        # Convert force/torque measurements to relevant state updates
+        pass
+
+# Advanced Fusion Methods
+class AdvancedSensorFusion:
+    def __init__(self):
+        self.ekf = HumanoidSensorFusion()
+        self.particle_filter = None  # For non-linear/non-Gaussian cases
+        self.multi_modal_weights = {}
+        self.confidence_estimators = {}
+    
+    def dynamic_sensor_weighting(self, sensor_readings):
+        """Dynamically weight sensor inputs based on reliability."""
+        weights = {}
+        
+        for sensor_type, reading in sensor_readings.items():
+            # Calculate confidence based on various factors
+            confidence = self.estimate_sensor_confidence(sensor_type, reading)
+            weights[sensor_type] = confidence
+            
+            # Update weights based on environmental conditions
+            weights[sensor_type] *= self.adjust_for_environment(sensor_type, reading)
+        
+        # Normalize weights
+        total_weight = sum(weights.values())
+        if total_weight > 0:
+            for sensor_type in weights:
+                weights[sensor_type] /= total_weight
+        
+        return weights
+    
+    def estimate_sensor_confidence(self, sensor_type, reading):
+        """Estimate confidence in sensor reading."""
+        if sensor_type == "camera":
+            # Estimate based on image quality, feature count, etc.
+            return self.estimate_camera_confidence(reading)
+        elif sensor_type == "lidar":
+            # Estimate based on point cloud density, reliability, etc.
+            return self.estimate_lidar_confidence(reading)
+        elif sensor_type == "imu":
+            # Estimate based on sensor stability, calibration, etc.
+            return self.estimate_imu_confidence(reading)
+        else:
+            return 0.5  # Default confidence
+    
+    def estimate_camera_confidence(self, image_reading):
+        """Estimate confidence in camera readings."""
+        # Analyze image for quality measures
+        image = image_reading['image']
+        
+        # Calculate image statistics
+        mean_brightness = np.mean(image)
+        std_dev = np.std(image)
+        
+        # Check for blur
+        laplacian_var = cv2.Laplacian(image, cv2.CV_64F).var()
+        
+        # Calculate confidence based on these measures
+        brightness_confidence = 1.0 if 50 < mean_brightness < 200 else 0.3
+        sharpness_confidence = min(1.0, laplacian_var / 1000.0)
+        
+        return (brightness_confidence + sharpness_confidence) / 2.0
+    
+    def estimate_lidar_confidence(self, lidar_reading):
+        """Estimate confidence in LiDAR readings."""
+        # More points usually means higher confidence
+        point_count = len(lidar_reading.get('points', []))
+        point_density = lidar_reading.get('density', 0)
+        
+        # Higher density and more points = higher confidence
+        confidence = min(1.0, (point_count * point_density) / 1000.0)
+        return confidence
+    
+    def estimate_imu_confidence(self, imu_reading):
+        """Estimate confidence in IMU readings."""
+        # Calculate based on sensor stability
+        accel_variance = np.var(imu_reading.get('acceleration', [0,0,0]))
+        gyro_variance = np.var(imu_reading.get('angular_velocity', [0,0,0]))
+        
+        # Lower variance = more stable = higher confidence
+        stability_score = 1.0 - min(0.9, (accel_variance + gyro_variance) / 2.0)
+        return stability_score
+    
+    def adjust_for_environment(self, sensor_type, reading):
+        """Adjust confidence based on environmental conditions."""
+        # Environmental factors that affect sensor performance
+        environmental_factors = {
+            'weather': 1.0,  # Default
+            'lighting': 1.0, # Default
+            'disturbances': 1.0 # Default
+        }
+        
+        # Camera affected by lighting and weather
+        if sensor_type == 'camera':
+            if environmental_factors['lighting'] < 0.3:
+                return 0.5  # Low lighting affects camera
+            elif environmental_factors['weather'] == 'rain':
+                return 0.7  # Rain affects camera visibility
+        
+        # LiDAR affected by weather and dust
+        elif sensor_type == 'lidar':
+            if environmental_factors['weather'] in ['fog', 'heavy_rain']:
+                return 0.6  # Weather affects LiDAR
+        
+        # IMU relatively robust
+        elif sensor_type == 'imu':
+            return 0.9  # IMU is generally robust
+        
+        return 1.0  # Default
+```
+
+## Real-Time Performance Optimization
+
+### Efficient Perception Pipelines
+
+Optimizing perception systems for real-time humanoid operation:
+
+```python
+import threading
+import queue
+import time
+from collections import deque
+import numpy as np
+
+class RealTimePerceptionPipeline:
+    def __init__(self, max_queue_size=10):
+        self.max_queue_size = max_queue_size
+        
+        # Queues for different sensor data
+        self.camera_queue = queue.Queue(maxsize=max_queue_size)
+        self.lidar_queue = queue.Queue(maxsize=max_queue_size)
+        self.imu_queue = queue.Queue(maxsize=max_queue_size)
+        
+        # Processing threads
+        self.camera_thread = None
+        self.lidar_thread = None
+        self.imu_thread = None
+        self.fusion_thread = None
+        
+        # Processing pipelines
+        self.camera_processor = CameraProcessor()
+        self.lidar_processor = LiDARProcessor()
+        self.imu_processor = IMUProcessor()
+        self.fusion_processor = FusionProcessor()
+        
+        # Synchronization
+        self.processing_lock = threading.Lock()
+        self.last_processed_timestamp = time.time()
+        
+        # Performance metrics
+        self.frame_rates = {
+            'camera': deque(maxlen=100),
+            'lidar': deque(maxlen=100),
+            'fusion': deque(maxlen=100)
+        }
+
+    def start_pipeline(self):
+        """Start all processing threads."""
+        self.camera_thread = threading.Thread(target=self.process_camera_stream, daemon=True)
+        self.lidar_thread = threading.Thread(target=self.process_lidar_stream, daemon=True)
+        self.imu_thread = threading.Thread(target=self.process_imu_stream, daemon=True)
+        self.fusion_thread = threading.Thread(target=self.process_fusion_stream, daemon=True)
+        
+        self.camera_thread.start()
+        self.lidar_thread.start()
+        self.imu_thread.start()
+        self.fusion_thread.start()
+    
+    def process_camera_stream(self):
+        """Process camera data in separate thread."""
+        while True:
+            try:
+                # Get camera data from queue
+                camera_data = self.camera_queue.get(timeout=1.0)
+                start_time = time.time()
+                
+                # Process camera data
+                processed_result = self.camera_processor.process_frame(camera_data)
+                
+                # Add result to fusion queue
+                self.fusion_processor.add_camera_data(processed_result, camera_data.timestamp)
+                
+                # Record performance metric
+                processing_time = time.time() - start_time
+                self.frame_rates['camera'].append(1.0 / processing_time if processing_time > 0 else 0)
+                
+            except queue.Empty:
+                continue  # Continue waiting for data
+            except Exception as e:
+                print(f"Camera processing error: {e}")
+    
+    def process_lidar_stream(self):
+        """Process LiDAR data in separate thread."""
+        while True:
+            try:
+                lidar_data = self.lidar_queue.get(timeout=1.0)
+                start_time = time.time()
+                
+                processed_result = self.lidar_processor.process_scan(lidar_data)
+                
+                self.fusion_processor.add_lidar_data(processed_result, lidar_data.timestamp)
+                
+                processing_time = time.time() - start_time
+                self.frame_rates['lidar'].append(1.0 / processing_time if processing_time > 0 else 0)
+                
+            except queue.Empty:
+                continue
+            except Exception as e:
+                print(f"LiDAR processing error: {e}")
+    
+    def process_imu_stream(self):
+        """Process IMU data in separate thread."""
+        while True:
+            try:
+                imu_data = self.imu_queue.get(timeout=1.0)
+                start_time = time.time()
+                
+                processed_result = self.imu_processor.process_reading(imu_data)
+                
+                self.fusion_processor.add_imu_data(processed_result, imu_data.timestamp)
+                
+                processing_time = time.time() - start_time
+                # IMU typically processes extremely fast, so we might need different metric
+                self.frame_rates['imu'].append(1000)  # Very high frequency
+                
+            except queue.Empty:
+                continue
+            except Exception as e:
+                print(f"IMU processing error: {e}")
+    
+    def process_fusion_stream(self):
+        """Process fused data in separate thread."""
+        while True:
+            try:
+                start_time = time.time()
+                
+                # Perform sensor fusion
+                fused_result = self.fusion_processor.perform_fusion()
+                
+                # Update with fusion result
+                self.update_perception_result(fused_result)
+                
+                processing_time = time.time() - start_time
+                self.frame_rates['fusion'].append(1.0 / processing_time if processing_time > 0 else 0)
+                
+                # Sleep to control fusion frequency
+                time.sleep(max(0, 1.0/30 - processing_time))  # 30 Hz fusion rate
+                
+            except Exception as e:
+                print(f"Fusion processing error: {e}")
+                time.sleep(0.1)  # Brief pause on error
+    
+    def add_camera_data(self, camera_frame):
+        """Add camera data to processing queue."""
+        try:
+            self.camera_queue.put_nowait(camera_frame)
+        except queue.Full:
+            # Discard oldest if queue is full
+            try:
+                self.camera_queue.get_nowait()  # Remove oldest
+                self.camera_queue.put_nowait(camera_frame)  # Add new
+            except queue.Empty:
+                pass  # Queue somehow became empty
+    
+    def add_lidar_data(self, lidar_scan):
+        """Add LiDAR data to processing queue."""
+        try:
+            self.lidar_queue.put_nowait(lidar_scan)
+        except queue.Full:
+            try:
+                self.lidar_queue.get_nowait()
+                self.lidar_queue.put_nowait(lidar_scan)
+            except queue.Empty:
+                pass
+    
+    def add_imu_data(self, imu_reading):
+        """Add IMU data to processing queue."""
+        try:
+            self.imu_queue.put_nowait(imu_reading)
+        except queue.Full:
+            try:
+                self.imu_queue.get_nowait()
+                self.imu_queue.put_nowait(imu_reading)
+            except queue.Empty:
+                pass
+    
+    def update_perception_result(self, fused_result):
+        """Update the current perception result."""
+        with self.processing_lock:
+            self.current_perception = fused_result
+            self.last_processed_timestamp = time.time()
+    
+    def get_current_perception(self):
+        """Get the most recent perception result."""
+        with self.processing_lock:
+            return self.current_perception
+    
+    def get_performance_metrics(self):
+        """Get current performance metrics."""
+        return {
+            'camera_fps': np.mean(list(self.frame_rates['camera'])) if self.frame_rates['camera'] else 0,
+            'lidar_processing_rate': np.mean(list(self.frame_rates['lidar'])) if self.frame_rates['lidar'] else 0,
+            'fusion_rate': np.mean(list(self.frame_rates['fusion'])) if self.frame_rates['fusion'] else 0,
+            'latency': time.time() - self.last_processed_timestamp
+        }
+
+class CameraProcessor:
+    def __init__(self):
+        # Initialize camera processing components
+        self.object_detector = ObjectDetector()
+        self.segmentation_model = SemanticSegmentation()
+        self.depth_estimator = DepthEstimator()
+        
+        # Optimization parameters
+        self.processing_resolution = (640, 480)
+        self.skip_frames = 0  # Process every N+1 frames
+        self.frame_counter = 0
+    
+    def process_frame(self, camera_data):
+        """Process a single camera frame."""
+        # Check if we should skip this frame for performance
+        if self.skip_frames > 0 and self.frame_counter % (self.skip_frames + 1) != 0:
+            self.frame_counter += 1
+            return None  # Skip processing for performance
+        
+        self.frame_counter += 1
+        
+        # Preprocess image
+        processed_image = self.preprocess_image(camera_data.image)
+        
+        # Perform multiple perception tasks
+        detections = self.object_detector.detect(processed_image)
+        segmentation = self.segmentation_model.segment(processed_image)
+        depth_map = self.depth_estimator.estimate(processed_image) if processed_image.depth_available else None
+        
+        # Package results
+        result = {
+            'timestamp': camera_data.timestamp,
+            'detections': detections,
+            'segmentation': segmentation,
+            'depth_map': depth_map,
+            'image_shape': processed_image.shape
+        }
+        
+        return result
+    
+    def preprocess_image(self, image):
+        """Preprocess image for efficient processing."""
+        # Resize image for faster processing
+        if image.shape[0] != self.processing_resolution[1] or image.shape[1] != self.processing_resolution[0]:
+            image = cv2.resize(image, self.processing_resolution)
+        
+        return image
+
+class LiDARProcessor:
+    def __init__(self):
+        # Initialize LiDAR processing components
+        self.ground_classifier = GroundClassifier()
+        self.obstacle_detector = ObstacleDetector()
+        self.map_builder = MapBuilder()
+        
+        # Optimization parameters
+        self.downsampling_ratio = 0.1  # Use only 10% of points for efficiency
+        self.use_roi = True  # Only process region of interest
+        self.roi_bounds = {'x': (-5, 5), 'y': (-5, 5), 'z': (0, 2)}  # ROI for humanoid navigation
+    
+    def process_scan(self, lidar_data):
+        """Process a single LiDAR scan."""
+        # Apply downsampling for performance
+        if self.downsampling_ratio < 1.0:
+            lidar_data.points = self.downsample_points(lidar_data.points)
+        
+        # Apply region of interest for humanoid-specific processing
+        if self.use_roi:
+            lidar_data.points = self.apply_roi(lidar_data.points)
+        
+        # Perform processing tasks
+        ground_points = self.ground_classifier.classify(lidar_data.points)
+        obstacles = self.obstacle_detector.detect(lidar_data.points)
+        local_map = self.map_builder.build(lidar_data.points)
+        
+        result = {
+            'timestamp': lidar_data.timestamp,
+            'ground_points': ground_points,
+            'obstacles': obstacles,
+            'local_map': local_map,
+            'point_count': len(lidar_data.points)
+        }
+        
+        return result
+    
+    def downsample_points(self, points):
+        """Downsample point cloud for performance."""
+        indices = np.random.choice(len(points), 
+                                 size=int(len(points) * self.downsampling_ratio), 
+                                 replace=False)
+        return points[indices]
+    
+    def apply_roi(self, points):
+        """Apply region of interest filter."""
+        mask = (
+            (points[:, 0] >= self.roi_bounds['x'][0]) & 
+            (points[:, 0] <= self.roi_bounds['x'][1]) &
+            (points[:, 1] >= self.roi_bounds['y'][0]) & 
+            (points[:, 1] <= self.roi_bounds['y'][1]) &
+            (points[:, 2] >= self.roi_bounds['z'][0]) & 
+            (points[:, 2] <= self.roi_bounds['z'][1])
+        )
+        return points[mask]
+
+class FusionProcessor:
+    def __init__(self):
+        self.synchronized_data = {
+            'camera': [],
+            'lidar': [],
+            'imu': []
+        }
+        self.fusion_algorithm = MultimodalFusion()
+        self.temporal_window = 0.1  # 100ms window for synchronization
+    
+    def add_camera_data(self, processed_data, timestamp):
+        """Add processed camera data for fusion."""
+        self.synchronized_data['camera'].append((processed_data, timestamp))
+        self.prune_old_data(timestamp)
+    
+    def add_lidar_data(self, processed_data, timestamp):
+        """Add processed LiDAR data for fusion."""
+        self.synchronized_data['lidar'].append((processed_data, timestamp))
+        self.prune_old_data(timestamp)
+    
+    def add_imu_data(self, processed_data, timestamp):
+        """Add processed IMU data for fusion."""
+        self.synchronized_data['imu'].append((processed_data, timestamp))
+        self.prune_old_data(timestamp)
+    
+    def prune_old_data(self, current_timestamp):
+        """Remove old data that's outside the temporal window."""
+        for sensor_type in self.synchronized_data:
+            self.synchronized_data[sensor_type] = [
+                (data, ts) for data, ts in self.synchronized_data[sensor_type]
+                if abs(ts - current_timestamp) <= self.temporal_window
+            ]
+    
+    def perform_fusion(self):
+        """Perform sensor fusion across all modalities."""
+        # Find latest common timestamp across all sensors
+        latest_common_time = self.find_latest_common_timestamp()
+        if latest_common_time is None:
+            return None  # Not enough synchronized data
+        
+        # Get synchronized data for fusion
+        camera_data = self.get_closest_data('camera', latest_common_time)
+        lidar_data = self.get_closest_data('lidar', latest_common_time)
+        imu_data = self.get_closest_data('imu', latest_common_time)
+        
+        # Perform fusion
+        fused_result = self.fusion_algorithm.fuse_multi_modal(
+            camera_data, lidar_data, imu_data
+        )
+        
+        return fused_result
+    
+    def find_latest_common_timestamp(self):
+        """Find the latest timestamp common to all sensor streams."""
+        if (len(self.synchronized_data['camera']) == 0 or 
+            len(self.synchronized_data['lidar']) == 0 or 
+            len(self.synchronized_data['imu']) == 0):
+            return None
+        
+        # Get latest timestamp for each sensor
+        latest_camera = max([ts for _, ts in self.synchronized_data['camera']])
+        latest_lidar = max([ts for _, ts in self.synchronized_data['lidar']])
+        latest_imu = max([ts for _, ts in self.synchronized_data['imu']])
+        
+        # Find latest common time within window
+        latest_common = min(latest_camera, latest_lidar, latest_imu)
+        earliest = max(latest_camera, latest_lidar, latest_imu)
+        
+        # Check if all timestamps are within temporal window
+        if abs(earliest - latest_common) <= self.temporal_window:
+            return latest_common
+        
+        return None
+    
+    def get_closest_data(self, sensor_type, target_timestamp):
+        """Get the data closest to target timestamp."""
+        if len(self.synchronized_data[sensor_type]) == 0:
+            return None
+        
+        # Find data with closest timestamp
+        closest_idx = 0
+        min_diff = abs(self.synchronized_data[sensor_type][0][1] - target_timestamp)
+        
+        for i, (_, ts) in enumerate(self.synchronized_data[sensor_type]):
+            diff = abs(ts - target_timestamp)
+            if diff < min_diff:
+                min_diff = diff
+                closest_idx = i
+        
+        return self.synchronized_data[sensor_type][closest_idx][0]
+
+class MultimodalFusion:
+    def __init__(self):
+        self.weighting_strategy = "confidence_based"
+        self.calibration_matrices = {}  # Store calibration between sensors
+        self.fusion_models = {}  # Models for combining different modalities
+    
+    def fuse_multi_modal(self, camera_data, lidar_data, imu_data):
+        """Fuse data from multiple modalities."""
+        # Apply sensor calibration
+        calibrated_camera = self.calibrate_camera_data(camera_data)
+        calibrated_lidar = self.calibrate_lidar_data(lidar_data)
+        calibrated_imu = self.calibrate_imu_data(imu_data)
+        
+        # Perform data association (match objects across modalities)
+        associated_objects = self.associate_objects(calibrated_camera, calibrated_lidar)
+        
+        # Fuse object information
+        fused_objects = self.fuse_object_information(associated_objects)
+        
+        # Integrate pose information from IMU
+        fused_pose = self.integrate_imu_pose(calibrated_imu, fused_objects)
+        
+        # Combine with environment understanding
+        environment_map = self.create_environment_map(calibrated_lidar, fused_objects)
+        
+        return {
+            'objects': fused_objects,
+            'pose': fused_pose,
+            'map': environment_map,
+            'confidence': self.calculate_overall_confidence(fused_objects, fused_pose)
+        }
+    
+    def associate_objects(self, camera_data, lidar_data):
+        """Associate objects detected in camera and LiDAR."""
+        associations = []
+        
+        for cam_obj in camera_data.get('detections', []):
+            # Project 3D bounding box from camera to LiDAR coordinate frame
+            projected_bbox = self.project_camera_to_lidar(cam_obj['bbox_3d'])
+            
+            # Find corresponding LiDAR clusters
+            matching_lidar_objects = self.find_matching_lidar_clusters(
+                projected_bbox, lidar_data['obstacles']
+            )
+            
+            # Create association
+            associations.append({
+                'camera_object': cam_obj,
+                'lidar_objects': matching_lidar_objects,
+                'association_confidence': 0.8  # Simplified
+            })
+        
+        return associations
+    
+    def fuse_object_information(self, associated_objects):
+        """Fuse object information from different modalities."""
+        fused_objects = []
+        
+        for assoc in associated_objects:
+            cam_obj = assoc['camera_object']
+            lidar_objs = assoc['lidar_objects']
+            
+            # Combine properties from different modalities
+            fused_obj = {
+                'id': cam_obj['id'],
+                'class': cam_obj['class'],
+                'position': self.weighted_average_position(
+                    cam_obj.get('position', None),
+                    self.average_lidar_positions(lidar_objs) if lidar_objs else None
+                ),
+                'size': self.combine_size_measurements(
+                    cam_obj.get('size', None),
+                    self.average_lidar_sizes(lidar_objs) if lidar_objs else None
+                ),
+                'confidence': self.combine_confidences(
+                    cam_obj.get('confidence', 0),
+                    self.average_lidar_confidence(lidar_objs) if lidar_objs else 0
+                )
+            }
+            
+            fused_objects.append(fused_obj)
+        
+        return fused_objects
+    
+    def weighted_average_position(self, cam_pos, lidar_pos):
+        """Calculate position using weighted average based on confidence."""
+        if cam_pos is None and lidar_pos is None:
+            return None
+        elif cam_pos is None:
+            return lidar_pos
+        elif lidar_pos is None:
+            return cam_pos
+        else:
+            # Weighted average based on confidence
+            cam_weight = 0.6  # Higher weight for camera position
+            lidar_weight = 0.4  # Lower weight for LiDAR position
+            return cam_weight * np.array(cam_pos) + lidar_weight * np.array(lidar_pos)
+```
+
+## Quality Assurance and Validation
+
+### Perception Quality Metrics
+
+Measuring the quality of perception system output:
+
+```python
+import numpy as np
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from scipy.spatial.distance import cdist
+
+class PerceptionQualityEvaluator:
+    def __init__(self):
+        self.metrics = {}
+        self.ground_truth_available = False
+        self.ground_truth_data = None
+    
+    def set_ground_truth(self, ground_truth_data):
+        """Set the ground truth data for evaluation."""
+        self.ground_truth_available = True
+        self.ground_truth_data = ground_truth_data
+    
+    def evaluate_object_detection(self, detections, ground_truth):
+        """Evaluate object detection performance."""
+        if not self.ground_truth_available:
+            raise ValueError("Ground truth is required for evaluation")
+        
+        # Calculate IoU for each detection with each ground truth
+        iou_matrix = self.calculate_iou_matrix(detections, ground_truth)
+        
+        # Match detections to ground truth
+        matches = self.assign_detections_to_ground_truth(iou_matrix)
+        
+        # Calculate metrics
+        tp = len(matches)  # True positives
+        fp = len(detections) - tp  # False positives
+        fn = len(ground_truth) - tp  # False negatives
+        
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+        f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+        
+        return {
+            'precision': precision,
+            'recall': recall,
+            'f1_score': f1,
+            'true_positives': tp,
+            'false_positives': fp,
+            'false_negatives': fn,
+            'average_precision': self.calculate_ap(detections, ground_truth)
+        }
+    
+    def calculate_iou_matrix(self, detections, ground_truth):
+        """Calculate IoU matrix between detections and ground truth."""
+        iou_matrix = np.zeros((len(detections), len(ground_truth)))
+        
+        for i, det in enumerate(detections):
+            for j, gt in enumerate(ground_truth):
+                if det['class'] == gt['class']:  # Only calculate IoU for same class
+                    iou_matrix[i, j] = self.calculate_box_iou(det['bbox'], gt['bbox'])
+                else:
+                    iou_matrix[i, j] = 0  # No match for different classes
+        
+        return iou_matrix
+    
+    def calculate_box_iou(self, box1, box2):
+        """Calculate Intersection over Union for two bounding boxes."""
+        # Calculate intersection
+        x1_inter = max(box1[0], box2[0])
+        y1_inter = max(box1[1], box2[1])
+        x2_inter = min(box1[2], box2[2])
+        y2_inter = min(box1[3], box2[3])
+        
+        if x2_inter <= x1_inter or y2_inter <= y1_inter:
+            return 0  # No intersection
+        
+        inter_area = (x2_inter - x1_inter) * (y2_inter - y1_inter)
+        box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
+        box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])
+        union_area = box1_area + box2_area - inter_area
+        
+        return inter_area / union_area if union_area > 0 else 0
+    
+    def assign_detections_to_ground_truth(self, iou_matrix, iou_threshold=0.5):
+        """Assign detections to ground truth using Hungarian algorithm."""
+        from scipy.optimize import linear_sum_assignment
+        
+        # Negate IoU to use as cost matrix (Hungarian algorithm minimizes cost)
+        cost_matrix = 1 - iou_matrix
+        cost_matrix[cost_matrix > 1] = 2  # Penalty for low IoU assignments
+        
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+        
+        # Filter assignments based on IoU threshold
+        assignments = []
+        for i, j in zip(row_ind, col_ind):
+            if iou_matrix[i, j] >= iou_threshold:
+                assignments.append((i, j))
+        
+        return assignments
+    
+    def calculate_ap(self, detections, ground_truth, iou_thresholds=np.arange(0.5, 1.0, 0.05)):
+        """Calculate Average Precision across multiple IoU thresholds."""
+        aps = []
+        for iou_thresh in iou_thresholds:
+            # Sort detections by confidence
+            sorted_dets = sorted(detections, key=lambda x: x['confidence'], reverse=True)
+            
+            # Initialize tracking
+            matched = [False] * len(ground_truth)
+            tp = np.zeros(len(sorted_dets))
+            fp = np.zeros(len(sorted_dets))
+            
+            for i, det in enumerate(sorted_dets):
+                # Find ground truth with best IoU
+                best_iou = 0
+                best_gt_idx = -1
+                
+                for j, gt in enumerate(ground_truth):
+                    if det['class'] == gt['class'] and not matched[j]:
+                        iou = self.calculate_box_iou(det['bbox'], gt['bbox'])
+                        if iou > best_iou:
+                            best_iou = iou
+                            best_gt_idx = j
+                
+                if best_iou >= iou_thresh:
+                    tp[i] = 1
+                    matched[best_gt_idx] = True
+                else:
+                    fp[i] = 1
+            
+            # Calculate precision-recall
+            cum_tp = np.cumsum(tp)
+            cum_fp = np.cumsum(fp)
+            precisions = cum_tp / (cum_tp + cum_fp)
+            recalls = cum_tp / len(ground_truth)
+            
+            # Calculate AP using 11-point interpolation
+            ap = 0
+            for t in np.arange(0, 1.1, 0.1):
+                p_recalls = precisions[recalls >= t]
+                p = np.max(p_recalls) if len(p_recalls) > 0 else 0
+                ap += p / 11.0
+            
+            aps.append(ap)
+        
+        return np.mean(aps) if len(aps) > 0 else 0
+    
+    def evaluate_scene_understanding(self, scene_graph, ground_truth_graph):
+        """Evaluate understanding of scene relationships and environment."""
+        if not self.ground_truth_available:
+            raise ValueError("Ground truth is required for evaluation")
+        
+        # Calculate structural similarity
+        structure_similarity = self.calculate_graph_similarity(scene_graph, ground_truth_graph)
+        
+        # Calculate semantic accuracy
+        semantic_accuracy = self.calculate_semantic_accuracy(scene_graph, ground_truth_graph)
+        
+        return {
+            'structure_similarity': structure_similarity,
+            'semantic_accuracy': semantic_accuracy,
+            'overall_understanding_score': (structure_similarity + semantic_accuracy) / 2
+        }
+    
+    def calculate_graph_similarity(self, graph1, graph2):
+        """Calculate similarity between two scene graphs."""
+        # This would involve comparing nodes, edges, and their attributes
+        # Simplified implementation
+        nodes_match = len(set(graph1.nodes) & set(graph2.nodes)) / len(set(graph1.nodes) | set(graph2.nodes))
+        edges_match = len(set(graph1.edges) & set(graph2.edges)) / len(set(graph1.edges) | set(graph2.edges))
+        
+        return (nodes_match + edges_match) / 2
+    
+    def calculate_semantic_accuracy(self, scene_graph, ground_truth_graph):
+        """Calculate accuracy of semantic labeling."""
+        correct_labels = 0
+        total_nodes = max(len(scene_graph.nodes), len(ground_truth_graph.nodes))
+        
+        for node_id in scene_graph.nodes:
+            if node_id in ground_truth_graph.nodes:
+                if scene_graph.nodes[node_id]['label'] == ground_truth_graph.nodes[node_id]['label']:
+                    correct_labels += 1
+        
+        return correct_labels / total_nodes if total_nodes > 0 else 0
+
+class OnlineValidationSystem:
+    def __init__(self):
+        self.evaluator = PerceptionQualityEvaluator()
+        self.quality_thresholds = {
+            'detection_precision': 0.8,
+            'detection_recall': 0.7,
+            'tracking_accuracy': 0.85,
+            'localization_error': 0.05,  # meters
+            'mapping_consistency': 0.9
+        }
+        self.performance_history = []
+    
+    def validate_perception_output(self, perception_result):
+        """Validate perception system output in real-time."""
+        validation_results = {}
+        
+        # Validate different aspects
+        validation_results['object_detection'] = self.validate_objects(
+            perception_result.get('objects', [])
+        )
+        
+        validation_results['spatial_reasoning'] = self.validate_spatial_relationships(
+            perception_result
+        )
+        
+        validation_results['temporal_consistency'] = self.validate_temporal_consistency(
+            perception_result
+        )
+        
+        validation_results['safety_validation'] = self.validate_safety_requirements(
+            perception_result
+        )
+        
+        # Overall confidence score
+        validation_results['overall_confidence'] = self.calculate_overall_confidence(
+            validation_results
+        )
+        
+        # Store for performance tracking
+        self.performance_history.append(validation_results)
+        
+        return validation_results
+    
+    def validate_objects(self, objects):
+        """Validate detected objects."""
+        if len(objects) == 0:
+            return {'valid': True, 'confidence': 0.5, 'message': 'No objects detected'}
+        
+        # Validate physical plausibility
+        valid_objects = []
+        for obj in objects:
+            if self.is_physically_plausible(obj):
+                valid_objects.append(obj)
+        
+        confidence = len(valid_objects) / len(objects) if len(objects) > 0 else 0
+        
+        return {
+            'valid': confidence > 0.7,
+            'confidence': confidence,
+            'count': len(valid_objects),
+            'total_detected': len(objects)
+        }
+    
+    def is_physically_plausible(self, obj):
+        """Check if object detection is physically plausible."""
+        # Check size constraints
+        if 'size' in obj:
+            size = obj['size']
+            if size[0] < 0.01 or size[1] < 0.01 or size[2] < 0.01:  # Too small
+                return False
+            if size[0] > 10 or size[1] > 10 or size[2] > 10:  # Too large for typical environment
+                return False
+        
+        # Check position constraints
+        if 'position' in obj:
+            pos = obj['position']
+            # Check if object is too high/low (assuming robot operates near ground)
+            if pos[2] < -2 or pos[2] > 4:  # Below ground or too high
+                return False
+        
+        # Check class validity
+        if 'class' in obj:
+            valid_classes = ['person', 'chair', 'table', 'cabinet', 'door', 
+                           'window', 'wall', 'floor', 'object', 'robot']
+            if obj['class'] not in valid_classes:
+                # For robotics, unknown classes might be valid, but check with domain
+                return True  # For now, assume valid
+        
+        return True
+    
+    def validate_spatial_relationships(self, perception_result):
+        """Validate spatial relationships between objects."""
+        # Check for impossible spatial relationships
+        # e.g., objects inside other objects without proper containment
+        objects = perception_result.get('objects', [])
+        
+        for obj in objects:
+            # Check for floor objects below ground level
+            if obj.get('class') == 'floor':
+                if obj.get('position', [0,0,0])[2] < -0.1:  # Floor shouldn't be below ground
+                    return {'valid': False, 'confidence': 0.1, 'message': 'Floor below ground level'}
+        
+        return {'valid': True, 'confidence': 0.95, 'message': 'Spatial relationships valid'}
+    
+    def validate_temporal_consistency(self, perception_result):
+        """Validate temporal consistency of perception results."""
+        # Check for temporal consistency with previous results
+        # This would require storing previous results
+        if not hasattr(self, 'previous_result'):
+            self.previous_result = perception_result
+            return {'valid': True, 'confidence': 0.8, 'message': 'First result, no consistency check'}
+        
+        # Check for consistency in detected objects
+        prev_objects = {obj.get('id'): obj for obj in self.previous_result.get('objects', [])}
+        curr_objects = {obj.get('id'): obj for obj in perception_result.get('objects', [])}
+        
+        consistent_changes = 0
+        total_compared = 0
+        
+        for obj_id, curr_obj in curr_objects.items():
+            if obj_id in prev_objects:
+                prev_obj = prev_objects[obj_id]
+                
+                # Check if position change is reasonable (given time passed)
+                if 'position' in curr_obj and 'position' in prev_obj:
+                    pos_change = np.linalg.norm(
+                        np.array(curr_obj['position']) - np.array(prev_obj['position'])
+                    )
+                    
+                    # Assuming max reasonable speed of 1 m/s
+                    time_delta = perception_result.get('timestamp', 0) - self.previous_result.get('timestamp', 0)
+                    max_expected_change = 1.0 * (time_delta + 0.1)  # Add small buffer
+                    
+                    if pos_change <= max_expected_change:
+                        consistent_changes += 1
+                    total_compared += 1
+        
+        consistency_rate = consistent_changes / total_compared if total_compared > 0 else 1.0
+        
+        self.previous_result = perception_result
+        return {'valid': consistency_rate > 0.8, 'confidence': consistency_rate, 'message': f'{consistent_changes}/{total_compared} objects consistent'}
+    
+    def validate_safety_requirements(self, perception_result):
+        """Validate safety-related perception requirements."""
+        objects = perception_result.get('objects', [])
+        
+        # Check for nearby obstacles that could affect robot safety
+        robot_pos = np.array(perception_result.get('robot_position', [0, 0, 0]))
+        
+        safety_violations = 0
+        for obj in objects:
+            if obj.get('class') in ['person', 'obstacle', 'furniture']:
+                if 'position' in obj:
+                    obj_pos = np.array(obj['position'])
+                    distance = np.linalg.norm(robot_pos - obj_pos)
+                    
+                    # Safety distance (adjust based on robot size and speed)
+                    if distance < 0.5:  # 50cm safety zone
+                        safety_violations += 1
+        
+        safe = safety_violations == 0
+        confidence = 0.1 if not safe else 0.95 - (safety_violations * 0.05)  # Lower confidence with more violations
+        
+        return {
+            'valid': safe,
+            'confidence': max(0.1, confidence),
+            'violations': safety_violations,
+            'message': f'Safety check: {"Passed" if safe else "Violations detected"}'
+        }
+    
+    def calculate_overall_confidence(self, validation_results):
+        """Calculate overall confidence based on all validation results."""
+        confidences = []
+        
+        for validator_result in validation_results.values():
+            if isinstance(validator_result, dict) and 'confidence' in validator_result:
+                confidences.append(validator_result['confidence'])
+        
+        return np.mean(confidences) if confidences else 0.5
+    
+    def get_performance_summary(self):
+        """Get summary of recent performance."""
+        if not self.performance_history:
+            return "No performance data available"
+        
+        recent_results = self.performance_history[-10:]  # Last 10 validation results
+        
+        avg_confidence = np.mean([result['overall_confidence'] for result in recent_results])
+        
+        # Count validation failures
+        failures = 0
+        for result in recent_results:
+            if result['overall_confidence'] < 0.7:  # Threshold for acceptable performance
+                failures += 1
+        
+        return {
+            'average_confidence': avg_confidence,
+            'failure_rate': failures / len(recent_results),
+            'recent_validations': len(recent_results),
+            'performance_trend': 'improving' if len(recent_results) > 1 else 'insufficient_data'
+        }
+```
+
+## Troubleshooting and Debugging
+
+### Common Perception Issues and Solutions
+
+Understanding and resolving common perception system problems:
+
+**Perception Pipeline Issues**:
+```python
+class PerceptionDebugger:
+    def __init__(self):
+        self.debug_data = {}
+        self.error_patterns = set()
+        self.suspicious_behaviors = []
+    
+    def analyze_sensor_data_quality(self, sensor_data):
+        """Analyze quality of incoming sensor data."""
+        issues = []
+        
+        # Check for data completeness
+        if sensor_data is None or len(sensor_data) == 0:
+            issues.append("No sensor data received")
+            return issues
+        
+        # Analyze for common quality issues
+        if hasattr(sensor_data, 'timestamp'):
+            # Check timestamp validity
+            current_time = time.time()
+            if abs(current_time - sensor_data.timestamp) > 1.0:  # More than 1 second delay
+                issues.append(f"Data timestamp {sensor_data.timestamp} is stale (current: {current_time})")
+        
+        # Check for sensor data characteristics
+        if hasattr(sensor_data, 'data'):
+            if np.isnan(sensor_data.data).any():
+                issues.append("NaN values found in sensor data")
+            
+            if np.isinf(sensor_data.data).any():
+                issues.append("Infinite values found in sensor data")
+        
+        return issues
+    
+    def diagnose_sensor_fusion_problems(self, fusion_input, fusion_output):
+        """Diagnose common sensor fusion problems."""
+        diagnoses = []
+        
+        # Check for temporal synchronization issues
+        timestamp_diffs = []
+        for sensor_name, data in fusion_input.items():
+            if hasattr(data, 'timestamp'):
+                timestamp_diffs.append(data.timestamp)
+        
+        if len(timestamp_diffs) > 1:
+            max_diff = max(timestamp_diffs) - min(timestamp_diffs)
+            if max_diff > 0.1:  # More than 100ms difference
+                diagnoses.append(f"Temporal desynchronization detected: max diff = {max_diff}s")
+        
+        # Check for data type consistency
+        for sensor_name, data in fusion_input.items():
+            if not hasattr(data, 'timestamp') or not hasattr(data, 'data'):
+                diagnoses.append(f"Incomplete data structure for {sensor_name}")
+        
+        # Check for fusion output validity
+        if fusion_output is None:
+            diagnoses.append("Fusion produced no output")
+        elif hasattr(fusion_output, 'confidence') and fusion_output.confidence < 0.3:
+            diagnoses.append(f"Low fusion confidence: {fusion_output.confidence}")
+        
+        return diagnoses
+    
+    def identify_error_patterns(self, error_logs):
+        """Identify common error patterns in perception system."""
+        pattern_count = {}
+        
+        for error in error_logs:
+            # Extract error type and context
+            error_type = error.get('type', 'unknown')
+            context = error.get('context', '')
+            
+            pattern_key = f"{error_type}_{context[:50]}"  # Limit context length
+            pattern_count[pattern_key] = pattern_count.get(pattern_key, 0) + 1
+        
+        # Identify recurring patterns (>3 occurrences)
+        recurring_patterns = [
+            pattern for pattern, count in pattern_count.items()
+            if count > 3
+        ]
+        
+        self.error_patterns.update(recurring_patterns)
+        return recurring_patterns
+    
+    def suggest_fixes(self, diagnosis):
+        """Suggest potential fixes for identified problems."""
+        fixes = []
+        
+        if "temporal desynchronization" in diagnosis.lower():
+            fixes.append("Implement proper temporal synchronization or increase buffer time")
+        
+        if "nan values" in diagnosis.lower():
+            fixes.append("Add NaN/Inf value filtering to sensor preprocessing pipeline")
+        
+        if "low confidence" in diagnosis.lower():
+            fixes.append("Review sensor calibration and check for proper sensor fusion parameters")
+        
+        if "stale data" in diagnosis.lower():
+            fixes.append("Investigate sensor network performance and implement timeout mechanisms")
+        
+        return fixes
+
+class RealTimeMonitor:
+    def __init__(self):
+        self.performance_metrics = {
+            'frame_rate': [],
+            'processing_time': [],
+            'memory_usage': [],
+            'detection_accuracy': []
+        }
+        self.anomaly_thresholds = {
+            'frame_rate_drop': 0.8,  # If frame rate drops below 80% of expected
+            'processing_time_spike': 2.0,  # If processing time exceeds 2x normal
+            'memory_leak': 1.5  # If memory usage increases by 50%
+        }
+        self.last_update_time = time.time()
+    
+    def monitor_perception_system(self):
+        """Continuously monitor perception system performance."""
+        current_time = time.time()
+        
+        # Calculate frame rate
+        time_elapsed = current_time - self.last_update_time
+        if time_elapsed > 0:
+            frame_rate = 1.0 / time_elapsed
+            self.performance_metrics['frame_rate'].append(frame_rate)
+        
+        # Monitor processing time
+        # This would be integrated into actual processing functions
+        
+        # Limit memory usage
+        for metric_name, values in self.performance_metrics.items():
+            if len(values) > 1000:  # Keep only recent 1000 measurements
+                self.performance_metrics[metric_name] = values[-500:]
+        
+        self.last_update_time = current_time
+        return self.detect_anomalies()
+    
+    def detect_anomalies(self):
+        """Detect performance anomalies in perception system."""
+        anomalies = []
+        
+        # Check frame rate
+        if len(self.performance_metrics['frame_rate']) >= 10:
+            recent_avg = np.mean(self.performance_metrics['frame_rate'][-10:])
+            expected_rate = getattr(self, 'target_frame_rate', 30)  # Default to 30fps
+            
+            if recent_avg < expected_rate * self.anomaly_thresholds['frame_rate_drop']:
+                anomalies.append({
+                    'type': 'frame_rate_degradation',
+                    'severity': 'warning',
+                    'value': recent_avg,
+                    'expected': expected_rate,
+                    'message': f'Frame rate degraded to {recent_avg:.2f}fps (expected {expected_rate}fps)'
+                })
+        
+        # Check memory usage
+        # This would require actual memory monitoring implementation
+        current_memory = self.get_current_memory_usage()
+        if hasattr(self, 'baseline_memory'):
+            memory_growth = current_memory / self.baseline_memory
+            if memory_growth > self.anomaly_thresholds['memory_leak']:
+                anomalies.append({
+                    'type': 'memory_leak',
+                    'severity': 'critical',
+                    'value': current_memory,
+                    'baseline': self.baseline_memory,
+                    'growth': memory_growth,
+                    'message': f'Memory usage increased by {memory_growth:.2f}x from baseline'
+                })
+        
+        return anomalies
+    
+    def get_current_memory_usage(self):
+        """Get current memory usage (implementation depends on platform)."""
+        import psutil
+        return psutil.virtual_memory().percent
+    
+    def set_baseline_memory(self):
+        """Set baseline memory usage for leak detection."""
+        self.baseline_memory = self.get_current_memory_usage()
+    
+    def generate_health_report(self):
+        """Generate comprehensive health report of perception system."""
+        performance_summary = {}
+        
+        for metric_name, values in self.performance_metrics.items():
+            if values:
+                performance_summary[metric_name] = {
+                    'current': values[-1] if values else None,
+                    'average': np.mean(values),
+                    'std_dev': np.std(values),
+                    'min': np.min(values),
+                    'max': np.max(values),
+                    'count': len(values)
+                }
+        
+        return {
+            'performance_summary': performance_summary,
+            'anomalies': self.detect_anomalies(),
+            'health_score': self.calculate_health_score(),
+            'recommendations': self.get_recommendations()
+        }
+    
+    def calculate_health_score(self):
+        """Calculate overall health score for perception system."""
+        score = 100  # Start with perfect score
+        
+        # Deduct for anomalies
+        anomalies = self.detect_anomalies()
+        critical_count = sum(1 for a in anomalies if a['severity'] == 'critical')
+        warning_count = sum(1 for a in anomalies if a['severity'] == 'warning')
+        
+        score -= critical_count * 20  # Big deduction for critical issues
+        score -= warning_count * 5   # Smaller deduction for warnings
+        
+        # Ensure score stays within bounds
+        return max(0, min(100, score))
+    
+    def get_recommendations(self):
+        """Provide recommendations based on current system health."""
+        recommendations = []
+        
+        if len(self.performance_metrics['frame_rate']) >= 20:
+            avg_frame_rate = np.mean(self.performance_metrics['frame_rate'][-20:])
+            if avg_frame_rate < 10:  # Significantly below target
+                recommendations.append("Consider optimizing processing pipeline for better performance")
+        
+        # Add more recommendations based on other metrics
+        
+        return recommendations
+```
+
+## Exercises and Self-Check
+
+### Chapter 1: Fusing Speech, Gesture, and Vision Inputs
+
+1. **Multimodal Fusion Design**: Design a fusion system that combines speech "Go to the red box", a pointing gesture toward the box, and visual recognition of the red box. How would your system determine the actual target?
+
+2. **Temporal Synchronization**: Given a speech command arriving at t=0ms, a pointing gesture at t=50ms, and visual detection at t=100ms, design a synchronization strategy that maintains the relationship between these inputs.
+
+3. **Failure Handling**: Your visual system fails to detect any objects due to poor lighting. How would your multimodal system respond and continue operating?
+
+4. **Cross-Modal Attention**: Design a system that uses visual attention to help resolve ambiguous speech commands like "move it" by considering visual context.
+
+5. **Performance Optimization**: How would you optimize a multimodal perception system for real-time operation when each modality has different computational requirements?
+
+### Chapter 2: Integrating GPT-based Models
+
+1. **Safety Validation**: Design a safety validation system for GPT-generated robot commands. What checks would you implement?
+
+2. **Context Management**: How would you maintain context in a conversation where the robot needs to remember object locations and user preferences?
+
+3. **Prompt Engineering**: Create effective prompts for a GPT model to generate navigation commands from natural language inputs in a robotics context.
+
+4. **Error Handling**: How would your system handle cases where the GPT model generates commands that are physically impossible for the robot?
+
+5. **Privacy Protection**: Design a system that protects user privacy while allowing beneficial use of conversational data for robot learning.
+
+### Chapter 3: Robust Error Handling and Recovery
+
+1. **Error Classification**: Create a comprehensive classification system for different types of errors that can occur in multimodal perception systems.
+
+2. **Recovery Strategy**: Design a recovery strategy for when the robot's localization system fails in a complex environment.
+
+3. **Graceful Degradation**: How would your system gracefully degrade its capabilities when multiple sensors fail?
+
+4. **Emergency Procedures**: Design emergency procedures for when error recovery fails and human intervention is required.
+
+5. **Quality Assurance**: Create a validation framework to ensure perception system outputs meet quality standards.
+
+### Integration Exercises
+
+1. **System Integration**: Design the complete integration between multimodal input processing, GPT-based decision making, and error handling systems.
+
+2. **Performance Evaluation**: Create a comprehensive evaluation framework that assesses the integrated system's performance across different scenarios.
+
+3. **Human-in-the-Loop**: Design protocols for human operators to intervene in multimodal perception and decision making.
+
+4. **Safety Assurance**: Create a safety assurance framework that covers the entire multimodal system.
+
+5. **Continuous Learning**: Design a system that learns from errors and improves over time while maintaining safety.
+
+### Advanced Challenges
+
+1. **Multi-Robot Coordination**: How would you extend the multimodal perception system to work with multiple robots sharing information?
+
+2. **Long-Term Operation**: Design considerations for a multimodal perception system that needs to operate reliably for months in real-world conditions.
+
+3. **Adaptive Interfaces**: How would the perception system adapt to different users with varying capabilities and preferences?
+
+4. **Uncertainty Quantification**: Design methods to quantify and communicate uncertainty in multimodal perception outputs.
+
+5. **Scalability**: How would you scale the multimodal system for deployment on different types of robots with varying capabilities?
+
+## Self-Assessment Rubric
+
+Rate your understanding of each topic from 1-5 (5 = expert level):
+
+**Chapter 1: Multimodal Fusion**
+- Sensor synchronization: ___/5
+- Cross-modal attention: ___/5
+- Fusion algorithms: ___/5
+- Real-time processing: ___/5
+- Performance optimization: ___/5
+
+**Chapter 2: GPT Integration**
+- Model integration: ___/5
+- Safety considerations: ___/5
+- Context management: ___/5
+- Prompt engineering: ___/5
+- Quality assurance: ___/5
+
+**Chapter 3: Error Handling**
+- Error classification: ___/5
+- Recovery strategies: ___/5
+- Safety protocols: ___/5
+- Validation techniques: ___/5
+- Monitoring systems: ___/5
+
+**Integration Skills**
+- System architecture: ___/5
+- Real-time performance: ___/5
+- Safety integration: ___/5
+- Quality validation: ___/5
+- Debugging skills: ___/5
+
+## Summary
+
+This chapter covered the implementation of comprehensive perception systems for humanoid robots, integrating multiple sensor modalities, GPT-based decision making, and robust error handling. Effective perception systems require careful attention to synchronization, fusion algorithms, safety considerations, and real-time performance optimization.
+
+The integration of speech, gesture, and vision inputs with artificial intelligence models provides humanoid robots with rich perceptual capabilities that enable natural and effective interaction with humans and environments. Success requires balancing computational efficiency with perceptual accuracy while maintaining the safety and reliability essential for real-world deployment.
+
+The next chapter will focus on testing and validation methodologies for these complex perception systems, building upon the implementation foundation established in this chapter.
+
+---
+
+**Keywords**: Perception Systems, Multi-Modal Fusion, GPT Integration, Error Handling, Robotics, Computer Vision, Human-Robot Interaction, AI Integration

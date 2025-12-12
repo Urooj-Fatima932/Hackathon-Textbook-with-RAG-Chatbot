@@ -1,0 +1,631 @@
+---
+title: "Nodes, Topics, Services"
+sidebar_position: 2
+---
+
+# Nodes, Topics, Services
+
+## Learning Objectives
+
+By the end of this chapter, you should be able to:
+- Create and implement ROS 2 nodes in both C++ and Python
+- Understand and implement publish/subscribe communication using topics
+- Design and implement request/response communication using services
+- Configure Quality of Service (QoS) settings for topics and services
+- Debug and inspect nodes, topics, and services using ROS tools
+- Handle node parameters and lifecycle management
+- Implement proper error handling and node shutdown procedures
+
+## Introduction to ROS 2 Communication
+
+The fundamental building blocks of ROS 2 communication are nodes, topics, and services, which provide the infrastructure for distributed robotics applications. Understanding how to properly implement and use these components is essential for creating robust and maintainable robotic systems.
+
+This chapter focuses on practical implementation of these communication primitives, examining both the theoretical concepts and their practical application in real robotic systems.
+
+## ROS 2 Nodes
+
+### Node Fundamentals
+
+A node in ROS 2 is an executable process that performs a specific task within a robot system. Each node:
+- Implements a specific functionality (e.g., sensor processing, control algorithm, user interface)
+- Communicates with other nodes using ROS 2 communication primitives
+- Manages its own resources and lifecycle
+- Can be implemented in different programming languages
+
+### Creating Nodes in C++
+
+Basic node structure in C++:
+
+```cpp
+#include "rclcpp/rclcpp.hpp"
+
+class MyNode : public rclcpp::Node
+{
+public:
+    MyNode() : Node("my_node_name")
+    {
+        // Constructor implementation
+        RCLCPP_INFO(this->get_logger(), "MyNode started");
+    }
+    
+private:
+    // Private members
+};
+
+int main(int argc, char * argv[])
+{
+    rclcpp::init(argc, argv);
+    rclcpp::spin(std::make_shared<MyNode>());
+    rclcpp::shutdown();
+    return 0;
+}
+```
+
+### Creating Nodes in Python
+
+Basic node structure in Python:
+
+```python
+import rclpy
+from rclpy.node import Node
+
+class MyNode(Node):
+    def __init__(self):
+        super().__init__('my_node_name')
+        self.get_logger().info('MyNode started')
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = MyNode()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+### Node Parameters
+
+Nodes can accept parameters to customize behavior:
+
+```cpp
+// C++ parameter declaration
+this->declare_parameter<std::string>("my_param", "default_value");
+this->declare_parameter<int>("number_param", 42);
+
+// Getting parameter value
+std::string param_value = this->get_parameter("my_param").as_string();
+```
+
+```python
+# Python parameter declaration
+self.declare_parameter('my_param', 'default_value')
+self.declare_parameter('number_param', 42)
+
+# Getting parameter value
+param_value = self.get_parameter('my_param').value
+```
+
+### Node Lifecycle Management
+
+Advanced nodes can implement lifecycle management:
+
+```cpp
+#include "rclcpp_lifecycle/lifecycle_node.hpp"
+
+class LifecycleNodeExample : public rclcpp_lifecycle::LifecycleNode
+{
+public:
+    LifecycleNodeExample() : rclcpp_lifecycle::LifecycleNode("lifecycle_node")
+    {
+    }
+
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+    on_configure(const rclcpp_lifecycle::State &)
+    {
+        // Configure node resources
+        return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+    }
+
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+    on_activate(const rclcpp_lifecycle::State &)
+    {
+        // Activate node functionality
+        return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+    }
+};
+```
+
+## Topics and Publish/Subscribe Pattern
+
+### Topic Fundamentals
+
+Topics enable asynchronous, one-to-many communication:
+- Publishers send messages to topics
+- Subscribers receive messages from topics
+- Multiple publishers and subscribers can use the same topic
+- Communication is decoupled in time and space
+
+### Creating Publishers
+
+C++ publisher implementation:
+
+```cpp
+#include "std_msgs/msg/string.hpp"
+
+class PublisherNode : public rclcpp::Node
+{
+public:
+    PublisherNode() : Node("publisher_node")
+    {
+        publisher_ = this->create_publisher<std_msgs::msg::String>("topic_name", 10);
+        timer_ = this->create_wall_timer(
+            std::chrono::milliseconds(500),
+            std::bind(&PublisherNode::timer_callback, this));
+    }
+
+private:
+    void timer_callback()
+    {
+        auto message = std_msgs::msg::String();
+        message.data = "Hello, ROS 2 " + std::to_string(count_++);
+        RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
+        publisher_->publish(message);
+    }
+
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+    rclcpp::TimerBase::SharedPtr timer_;
+    int count_ = 0;
+};
+```
+
+Python publisher implementation:
+
+```python
+from std_msgs.msg import String
+
+class PublisherNode(Node):
+    def __init__(self):
+        super().__init__('publisher_node')
+        self.publisher_ = self.create_publisher(String, 'topic_name', 10)
+        timer_period = 0.5  # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.i = 0
+
+    def timer_callback(self):
+        msg = String()
+        msg.data = 'Hello, ROS 2 %d' % self.i
+        self.publisher_.publish(msg)
+        self.get_logger().info('Publishing: "%s"' % msg.data)
+        self.i += 1
+```
+
+### Creating Subscribers
+
+C++ subscriber implementation:
+
+```cpp
+#include "std_msgs/msg/string.hpp"
+
+class SubscriberNode : public rclcpp::Node
+{
+public:
+    SubscriberNode() : Node("subscriber_node")
+    {
+        subscription_ = this->create_subscription<std_msgs::msg::String>(
+            "topic_name", 10,
+            std::bind(&SubscriberNode::topic_callback, this, std::placeholders::_1));
+    }
+
+private:
+    void topic_callback(const std_msgs::msg::String::SharedPtr msg)
+    {
+        RCLCPP_INFO(this->get_logger(), "I heard: '%s'", msg->data.c_str());
+    }
+
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
+};
+```
+
+Python subscriber implementation:
+
+```python
+from std_msgs.msg import String
+
+class SubscriberNode(Node):
+    def __init__(self):
+        super().__init__('subscriber_node')
+        self.subscription = self.create_subscription(
+            String,
+            'topic_name',
+            self.listener_callback,
+            10)
+        self.subscription  # prevent unused variable warning
+
+    def listener_callback(self, msg):
+        self.get_logger().info('I heard: "%s"' % msg.data)
+```
+
+### Quality of Service (QoS) Configuration
+
+QoS settings affect communication behavior:
+
+```cpp
+// C++ QoS configuration
+rclcpp::QoS qos_profile(10);  // history depth of 10
+qos_profile.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+qos_profile.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+
+publisher_ = this->create_publisher<std_msgs::msg::String>("topic_name", qos_profile);
+```
+
+```python
+# Python QoS configuration
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
+
+qos_profile = QoSProfile(
+    depth=10,
+    reliability=ReliabilityPolicy.RELIABLE,
+    durability=DurabilityPolicy.TRANSIENT_LOCAL
+)
+
+self.publisher_ = self.create_publisher(String, 'topic_name', qos_profile)
+```
+
+## Services and Request/Response Pattern
+
+### Service Fundamentals
+
+Services enable synchronous request/response communication:
+- Client sends a request to a service
+- Server processes the request and returns a response
+- Communication is synchronous and blocking
+- Suitable for operations requiring immediate results
+
+### Creating Services
+
+C++ service server implementation:
+
+```cpp
+#include "example_interfaces/srv/add_two_ints.hpp"
+
+class ServiceServer : public rclcpp::Node
+{
+public:
+    ServiceServer() : Node("service_server")
+    {
+        service_ = this->create_service<example_interfaces::srv::AddTwoInts>(
+            "add_two_ints",
+            std::bind(&ServiceServer::handle_service, this, 
+                     std::placeholders::_1, std::placeholders::_2));
+    }
+
+private:
+    void handle_service(
+        const example_interfaces::srv::AddTwoInts::Request::SharedPtr request,
+        example_interfaces::srv::AddTwoInts::Response::SharedPtr response)
+    {
+        response->sum = request->a + request->b;
+        RCLCPP_INFO(this->get_logger(), "Incoming request: a=%ld, b=%ld", request->a, request->b);
+        RCLCPP_INFO(this->get_logger(), "Sending response: [%ld]", response->sum);
+    }
+
+    rclcpp::Service<example_interfaces::srv::AddTwoInts>::SharedPtr service_;
+};
+```
+
+Python service server implementation:
+
+```python
+from example_interfaces.srv import AddTwoInts
+
+class ServiceServer(Node):
+    def __init__(self):
+        super().__init__('service_server')
+        self.srv = self.create_service(AddTwoInts, 'add_two_ints', self.add_two_ints_callback)
+
+    def add_two_ints_callback(self, request, response):
+        response.sum = request.a + request.b
+        self.get_logger().info('Incoming request\na: %d b: %d' % (request.a, request.b))
+        return response
+```
+
+### Creating Service Clients
+
+C++ service client implementation:
+
+```cpp
+#include "example_interfaces/srv/add_two_ints.hpp"
+
+class ServiceClient : public rclcpp::Node
+{
+public:
+    ServiceClient() : Node("service_client")
+    {
+        client_ = this->create_client<example_interfaces::srv::AddTwoInts>("add_two_ints");
+        
+        // Wait for service to be available
+        while (!client_->wait_for_service(std::chrono::seconds(1))) {
+            if (!rclcpp::ok()) {
+                RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for service");
+                return;
+            }
+            RCLCPP_INFO(this->get_logger(), "Service not available, waiting again...");
+        }
+    }
+
+    void send_request(int a, int b)
+    {
+        auto request = std::make_shared<example_interfaces::srv::AddTwoInts::Request>();
+        request->a = a;
+        request->b = b;
+        
+        auto future = client_->async_send_request(request);
+        // Handle response asynchronously
+    }
+
+private:
+    rclcpp::Client<example_interfaces::srv::AddTwoInts>::SharedPtr client_;
+};
+```
+
+Python service client implementation:
+
+```python
+from example_interfaces.srv import AddTwoInts
+
+class ServiceClient(Node):
+    def __init__(self):
+        super().__init__('service_client')
+        self.cli = self.create_client(AddTwoInts, 'add_two_ints')
+        
+        while not self.cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service not available, waiting again...')
+        
+        self.req = AddTwoInts.Request()
+
+    def send_request(self, a, b):
+        self.req.a = a
+        self.req.b = b
+        self.future = self.cli.call_async(self.req)
+        # Handle response asynchronously
+```
+
+## Working with Messages and Services
+
+### Standard Message Types
+
+ROS 2 provides common message types:
+- **std_msgs**: Basic data types (String, Int32, Float64, etc.)
+- **geometry_msgs**: Geometric data (Point, Pose, Twist, etc.)
+- **sensor_msgs**: Sensor data (LaserScan, Image, JointState, etc.)
+- **nav_msgs**: Navigation data (Odometry, Path, OccupancyGrid, etc.)
+
+### Creating Custom Messages
+
+Custom messages are defined in `.msg` files:
+
+```
+# Custom message: MyMessage.msg
+string name
+int32 age
+float64 salary
+bool is_active
+```
+
+Custom services are defined in `.srv` files:
+
+```
+# Custom service: MyService.srv
+string input
+---
+string output
+int32 result
+```
+
+### Message Headers
+
+Standard message header for timing and identification:
+
+```
+# std_msgs/Header.msg
+builtin_interfaces/Time stamp
+string frame_id
+```
+
+## Advanced Communication Patterns
+
+### Action Services
+
+For long-running operations with feedback:
+
+```cpp
+#include "rclcpp_action/rclcpp_action.hpp"
+#include "example_interfaces/action/fibonacci.hpp"
+
+class ActionServer : public rclcpp::Node
+{
+public:
+    ActionServer() : Node("action_server")
+    {
+        using namespace std::placeholders;
+        
+        this->action_server_ = rclcpp_action::create_server<example_interfaces::action::Fibonacci>(
+            this->get_node_base_interface(),
+            this->get_node_clock_interface(),
+            this->get_node_logging_interface(),
+            this->get_node_waitables_interface(),
+            "fibonacci",
+            std::bind(&ActionServer::handle_goal, this, _1, _2),
+            std::bind(&ActionServer::handle_cancel, this, _1),
+            std::bind(&ActionServer::handle_accepted, this, _1));
+    }
+
+private:
+    rclcpp_action::Server<example_interfaces::action::Fibonacci>::SharedPtr action_server_;
+    
+    rclcpp_action::GoalResponse handle_goal(
+        const rclcpp_action::GoalUUID & uuid,
+        std::shared_ptr<const example_interfaces::action::Fibonacci::Goal> goal)
+    {
+        RCLCPP_INFO(this->get_logger(), "Received goal request with order %d", goal->order);
+        return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+    }
+    
+    rclcpp_action::CancelResponse handle_cancel(
+        const std::shared_ptr<rclcpp_action::ServerGoalHandle<example_interfaces::action::Fibonacci>> goal_handle)
+    {
+        RCLCPP_INFO(this->get_logger(), "Received request to cancel goal");
+        return rclcpp_action::CancelResponse::ACCEPT;
+    }
+    
+    void handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<example_interfaces::action::Fibonacci>> goal_handle)
+    {
+        using namespace std::placeholders;
+        // Start executing the action
+        std::thread{std::bind(&ActionServer::execute, this, _1), goal_handle}.detach();
+    }
+    
+    void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<example_interfaces::action::Fibonacci>> goal_handle)
+    {
+        RCLCPP_INFO(this->get_logger(), "Executing goal");
+        // Implementation of the action
+    }
+};
+```
+
+### Multiple Callback Groups
+
+For concurrent processing within a node:
+
+```cpp
+// Create callback groups
+auto group1 = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+auto group2 = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+// Create subscription with specific callback group
+rclcpp::SubscriptionOptions sub_options;
+sub_options.callback_group = group1;
+auto sub1 = this->create_subscription<MsgType>("topic1", 10, 
+    [this](const MsgType::SharedPtr msg) { /* callback */ }, sub_options);
+
+// Create another subscription with different callback group
+sub_options.callback_group = group2;
+auto sub2 = this->create_subscription<MsgType>("topic2", 10, 
+    [this](const MsgType::SharedPtr msg) { /* callback */ }, sub_options);
+
+// Create executor that handles multiple callback groups
+rclcpp::executors::MultiThreadedExecutor executor;
+executor.add_node(this->get_node_base_interface());
+executor.spin();
+```
+
+## Debugging and Inspection Tools
+
+### Common ROS 2 CLI Tools
+
+- **ros2 node**: List and info about running nodes
+- **ros2 topic**: List, echo, publish topics
+- **ros2 service**: List, call services
+- **ros2 param**: Get/set node parameters
+- **ros2 action**: List and interact with actions
+
+### Using ros2 topic
+
+```bash
+# List all topics
+ros2 topic list
+
+# Show topic info
+ros2 topic info /topic_name
+
+# Echo topic messages
+ros2 topic echo /topic_name
+
+# Publish to a topic
+ros2 topic pub /topic_name std_msgs/String "data: 'Hello'"
+```
+
+### Using ros2 service
+
+```bash
+# List all services
+ros2 service list
+
+# Show service info
+ros2 service info /service_name
+
+# Call a service
+ros2 service call /add_two_ints example_interfaces/srv/AddTwoInts "{a: 1, b: 2}"
+```
+
+## Best Practices
+
+### Error Handling
+
+Proper error handling in nodes:
+
+```cpp
+// Check if publisher is valid before publishing
+if (publisher_ && publisher_->is_activated()) {
+    publisher_->publish(message);
+}
+
+// Handle service call failures
+auto future = client->async_send_request(request);
+if (rclcpp::spin_until_future_complete(node, future) != 
+    rclcpp::FutureReturnCode::SUCCESS) {
+    RCLCPP_ERROR(node->get_logger(), "Service call failed");
+}
+```
+
+### Resource Management
+
+Proper cleanup and resource management:
+
+```cpp
+// Custom destructor for cleanup
+~MyNode() {
+    // Clean up resources
+    timer_.reset();
+    publisher_.reset();
+    subscription_.reset();
+}
+
+// Handle shutdown signals
+rclcpp::on_shutdown([]() {
+    RCLCPP_INFO(rclcpp::get_logger("MyNode"), "Shutdown requested");
+});
+```
+
+### Performance Considerations
+
+- Use appropriate QoS settings for your application
+- Consider message size and frequency
+- Use intra-process communication when possible
+- Implement proper message throttling for high-frequency data
+
+## Exercises and Self-Check
+
+1. **Implementation Exercise**: Create a ROS 2 node that publishes sensor data to a topic and another node that subscribes to this topic and processes the data. Use appropriate QoS settings.
+
+2. **Service Design**: Design a service interface for a robot arm that accepts joint position commands and returns execution status. Implement both the server and client.
+
+3. **Parameter Handling**: Create a node that uses parameters to configure its behavior. Demonstrate how parameters can be set at launch time.
+
+4. **Debugging Task**: Given a faulty ROS 2 program with nodes, topics, and services, identify potential issues and suggest fixes.
+
+5. **Architecture Challenge**: Design a multi-node ROS 2 system for a mobile robot with sensors, navigation, and user interface. Specify the nodes, topics, and services needed.
+
+## Summary
+
+Nodes, topics, and services form the core communication infrastructure of ROS 2. Nodes provide the computational units, topics enable asynchronous data distribution, and services provide synchronous request/response communication. Understanding these primitives is essential for building robust, maintainable robotic systems.
+
+The publish/subscribe pattern allows for decoupled, asynchronous communication, while the service pattern enables synchronous, request/response interactions. Both patterns support Quality of Service configurations to meet specific application requirements.
+
+Proper implementation of these communication patterns, along with appropriate error handling and resource management, is crucial for creating professional robotic applications that can operate reliably in real-world environments.
+
+---
+
+**Keywords**: ROS 2 Nodes, Topics, Services, Publish-Subscribe, Request-Response, QoS, Message Types, Communication

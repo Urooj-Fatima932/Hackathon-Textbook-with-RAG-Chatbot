@@ -1,0 +1,1626 @@
+---
+title: "High-Fidelity Rendering and Animation"
+sidebar_position: 2
+---
+
+# High-Fidelity Rendering and Animation
+
+## Learning Objectives
+
+By the end of this chapter, you should be able to:
+- Implement advanced rendering techniques for realistic robot visualization
+- Create and control robot animations in Unity
+- Optimize rendering performance for real-time robotics applications
+- Apply realistic materials and lighting to robot models
+- Implement visual effects for enhanced realism in robotics scenes
+- Integrate animation systems with robotics control interfaces
+
+## Introduction to High-Fidelity Rendering
+
+High-fidelity rendering in robotics visualization serves multiple purposes: creating photorealistic simulations for training computer vision algorithms, providing intuitive visualization for robot monitoring and debugging, and enabling virtual prototyping of robotic systems. Unity's advanced rendering capabilities, including the Universal Render Pipeline (URP) and High Definition Render Pipeline (HDRP), provide the tools needed for creating realistic robotics environments.
+
+This chapter explores advanced rendering techniques, animation systems, and optimization strategies specifically tailored for robotics applications.
+
+## Advanced Rendering Pipelines
+
+### Universal Render Pipeline (URP)
+
+For real-time robotics applications, URP provides a good balance of quality and performance:
+
+```csharp
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+
+public class URPConfiguration : MonoBehaviour
+{
+    [Header("URP Settings")]
+    public int rendererPriority = 0;
+    public bool enableSSAO = true;
+    public bool enableSSR = false; // Disabled for performance
+    public bool enableMotionBlur = false; // Disabled for robotics
+    
+    [Header("Lighting Settings")]
+    public float shadowDistance = 50f;
+    public int shadowResolution = 2048;
+    public float shadowBias = 0.1f;
+    
+    [Header("Post-Processing")]
+    public bool enablePostProcessing = false;
+    public float exposure = 0.0f;
+
+    void Start()
+    {
+        ConfigureURP();
+    }
+
+    void ConfigureURP()
+    {
+        // Get the URP asset if it exists
+        if (GraphicsSettings.renderPipelineAsset is UniversalRenderPipelineAsset urpAsset)
+        {
+            ConfigureURPAsset(urpAsset);
+        }
+        
+        SetupCameraRenderer();
+        ConfigureLighting();
+    }
+
+    void ConfigureURPAsset(UniversalRenderPipelineAsset urpAsset)
+    {
+        // Configure quality settings for robotics
+        urpAsset.shadowDistance = shadowDistance;
+        urpAsset.shadowCascadeCount = 2;
+        urpAsset.shadowDepthBias = shadowBias;
+        
+        // Set up renderer
+        urpAsset.supportsTerrainHoles = true;
+        urpAsset.supportsHDR = false;  // Often disabled for robotics data consistency
+        urpAsset.msaaSampleCount = 1;   // Disabled for performance
+        
+        // Configure rendering quality
+        urpAsset.renderScale = 1.0f;  // Full resolution for robotics applications
+    }
+
+    void SetupCameraRenderer()
+    {
+        // Configure the main camera for URP
+        Camera mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            // Add URP camera component
+            var cameraData = mainCamera.GetUniversalAdditionalCameraData();
+            if (cameraData == null)
+            {
+                cameraData = mainCamera.gameObject.AddComponent<UniversalAdditionalCameraData>();
+            }
+            
+            cameraData.renderShadows = true;
+            cameraData.allowXRRendering = false; // Usually disabled for robotics
+            
+            // Configure renderer features
+            ConfigureRendererFeatures(cameraData);
+        }
+    }
+
+    void ConfigureRendererFeatures(UniversalAdditionalCameraData cameraData)
+    {
+        // Add renderer features for robotics
+        if (enableSSAO)
+        {
+            AddSSAOFeature();
+        }
+        
+        if (enablePostProcessing)
+        {
+            cameraData.renderPostProcessing = true;
+        }
+        else
+        {
+            cameraData.renderPostProcessing = false;
+        }
+    }
+
+    void AddSSAOFeature()
+    {
+        // Screen Space Ambient Occlusion for better realism
+        // This can be added as a renderer feature in URP
+        Debug.Log("SSAO feature configured");
+        // Implementation would involve adding URP renderer features
+    }
+
+    void ConfigureLighting()
+    {
+        // Configure global lighting settings
+        RenderSettings.ambientIntensity = 0.5f;
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+        
+        // Configure fog if needed for depth perception
+        RenderSettings.fog = false; // Usually disabled for robotics data quality
+    }
+}
+```
+
+### HDRP for Maximum Fidelity
+
+For applications requiring highest visual fidelity:
+
+```csharp
+using UnityEngine;
+using UnityEngine.Rendering.HighDefinition;
+
+public class HDRPConfiguration : MonoBehaviour
+{
+    [Header("HDRP Settings")]
+    public bool useRayTracing = false;  // Disabled for performance
+    public float rayTracingMaxDistance = 100.0f;
+    public int maxReflectionBounces = 1;
+    
+    [Header("Lighting Quality")]
+    public int lightLoopSettings = 4; // Quality level
+    public int shadowQuality = 2;     // Medium quality
+    public float contactShadowDistance = 0.1f;
+
+    void Start()
+    {
+        ConfigureHDRP();
+    }
+
+    void ConfigureHDRP()
+    {
+        if (RenderPipelineManager.currentPipeline is HDRenderPipeline)
+        {
+            ConfigureHDRenderPipeline();
+        }
+    }
+
+    void ConfigureHDRenderPipeline()
+    {
+        // Configure HDRP settings for robotics
+        // This would typically be done in the HDRP asset settings
+        
+        // For dynamic configuration:
+        ConfigureLightLoop();
+        ConfigureQualitySettings();
+        ConfigureRayTracing();
+    }
+
+    void ConfigureLightLoop()
+    {
+        // Configure light loop settings for robotics
+        // This affects how lights are processed
+        HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
+        if (hdPipeline != null)
+        {
+            // Configure light loop for optimal robotics performance
+            Debug.Log("HDRP Light loop configured for robotics");
+        }
+    }
+
+    void ConfigureQualitySettings()
+    {
+        // Balance quality with performance for robotics
+        if (QualitySettings.GetRenderPipelineSettingsList<HDShadowSettings>(true, false).Length > 0)
+        {
+            var shadowSettings = new HDShadowSettings();
+            shadowSettings.maxShadowDistance = 100.0f;
+            shadowSettings.shadowDistanceFade = 0.1f;
+            shadowSettings.cascadeShadowSplitCount = 4;
+        }
+    }
+
+    void ConfigureRayTracing()
+    {
+        if (!useRayTracing) return;
+        
+        // Configure ray tracing for advanced reflections
+        // This is computationally expensive and often disabled for robotics
+        Debug.Log("Ray tracing configured");
+    }
+}
+```
+
+## Advanced Material Systems for Robotics
+
+### PBR Materials for Robot Components
+
+```csharp
+using UnityEngine;
+using System.Collections.Generic;
+
+public class RobotMaterialSystem : MonoBehaviour
+{
+    [Header("Material Presets")]
+    public Material metalMaterial;
+    public Material plasticMaterial;
+    public Material rubberMaterial;
+    public Material glassMaterial;
+    
+    [Header("Robot Components")]
+    public List<Renderer> robotRenderers = new List<Renderer>();
+    public RobotComponent[] robotComponents;
+
+    [System.Serializable]
+    public class RobotComponent
+    {
+        public string componentName;
+        public Renderer renderer;
+        public ComponentType componentType;
+        public float roughness = 0.5f;
+        public float metallic = 0.0f;
+        public Color baseColor = Color.white;
+    }
+
+    public enum ComponentType
+    {
+        Structural,
+        Actuator,
+        Sensor,
+        Electronics,
+        Protective,
+        Joint
+    }
+
+    void Start()
+    {
+        ApplyRobotMaterials();
+    }
+
+    void ApplyRobotMaterials()
+    {
+        foreach (RobotComponent component in robotComponents)
+        {
+            if (component.renderer != null)
+            {
+                ApplyMaterialForComponent(component);
+            }
+        }
+    }
+
+    void ApplyMaterialForComponent(RobotComponent component)
+    {
+        Material newMaterial = CreatePBRMaterial(component);
+        component.renderer.sharedMaterials = new Material[] { newMaterial };
+    }
+
+    Material CreatePBRMaterial(RobotComponent component)
+    {
+        // Create a physically-based material based on component type
+        Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        
+        // Configure based on component type
+        switch (component.componentType)
+        {
+            case ComponentType.Structural:
+                // Metal structural components
+                mat.SetColor("_BaseColor", component.baseColor);
+                mat.SetFloat("_Metallic", component.metallic + 0.8f);
+                mat.SetFloat("_Smoothness", 1.0f - component.roughness);
+                break;
+                
+            case ComponentType.Actuator:
+                // Motors and actuators - often have brushed metal look
+                mat.SetColor("_BaseColor", component.baseColor);
+                mat.SetFloat("_Metallic", component.metallic + 0.3f);
+                mat.SetFloat("_Smoothness", 0.5f);
+                break;
+                
+            case ComponentType.Sensor:
+                // Sensors often have dark, non-reflective materials
+                mat.SetColor("_BaseColor", Color.black);
+                mat.SetFloat("_Metallic", 0.1f);
+                mat.SetFloat("_Smoothness", 0.1f);
+                break;
+                
+            case ComponentType.Electronics:
+                // Circuit boards and electronics - green, non-metallic
+                mat.SetColor("_BaseColor", Color.green);
+                mat.SetFloat("_Metallic", 0.0f);
+                mat.SetFloat("_Smoothness", 0.2f);
+                break;
+                
+            case ComponentType.Protective:
+                // Protective covers - rubber or plastic
+                mat.SetColor("_BaseColor", component.baseColor);
+                mat.SetFloat("_Metallic", 0.0f);
+                mat.SetFloat("_Smoothness", 0.3f);
+                break;
+                
+            case ComponentType.Joint:
+                // Joint components - various finishes
+                mat.SetColor("_BaseColor", Color.grey);
+                mat.SetFloat("_Metallic", component.metallic + 0.5f);
+                mat.SetFloat("_Smoothness", 0.4f);
+                break;
+        }
+        
+        // Apply common properties
+        mat.SetFloat("_Smoothness", 1.0f - component.roughness);
+        mat.EnableKeyword("_NORMALMAP");
+        
+        return mat;
+    }
+
+    public void UpdateComponentMaterial(string componentName, ComponentType newType, Color newColor)
+    {
+        RobotComponent component = FindComponent(componentName);
+        if (component != null)
+        {
+            component.componentType = newType;
+            component.baseColor = newColor;
+            ApplyMaterialForComponent(component);
+        }
+    }
+
+    RobotComponent FindComponent(string name)
+    {
+        foreach (RobotComponent comp in robotComponents)
+        {
+            if (comp.componentName == name)
+                return comp;
+        }
+        return null;
+    }
+
+    // Method to create materials from robot specifications
+    public void CreateMaterialsFromURDFSpecs(MaterialSpec[] specs)
+    {
+        foreach (MaterialSpec spec in specs)
+        {
+            RobotComponent component = FindComponent(spec.componentName);
+            if (component != null)
+            {
+                component.roughness = spec.roughness;
+                component.metallic = spec.metallic;
+                component.baseColor = spec.color;
+                ApplyMaterialForComponent(component);
+            }
+        }
+    }
+
+    [System.Serializable]
+    public class MaterialSpec
+    {
+        public string componentName;
+        public float roughness = 0.5f;
+        public float metallic = 0.0f;
+        public Color color = Color.white;
+    }
+}
+```
+
+### Advanced Shading Techniques
+
+```csharp
+using UnityEngine;
+
+public class AdvancedRobotShading : MonoBehaviour
+{
+    [Header("Surface Details")]
+    public Texture2D normalMap;
+    public Texture2D roughnessMap;
+    public Texture2D metallicMap;
+    public Texture2D occlusionMap;
+    
+    [Header("Detail Mapping")]
+    public Texture2D detailAlbedo;
+    public Texture2D detailNormal;
+    public float detailScale = 10.0f;
+    public float detailNormalScale = 1.0f;
+    
+    [Header("Anisotropic Shading")]
+    public bool enableAnisotropic = false;
+    public float anisotropicScale = 0.0f;
+    
+    [Header("Clearcoat")]
+    public bool enableClearcoat = false;
+    public float clearcoat = 0.0f;
+    public float clearcoatRoughness = 0.0f;
+
+    void Start()
+    {
+        ConfigureAdvancedShading();
+    }
+
+    void ConfigureAdvancedShading()
+    {
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        
+        foreach (Renderer renderer in renderers)
+        {
+            Material[] materials = renderer.sharedMaterials;
+            
+            for (int i = 0; i < materials.Length; i++)
+            {
+                ConfigureMaterialShading(materials[i]);
+            }
+            
+            renderer.sharedMaterials = materials;
+        }
+    }
+
+    void ConfigureMaterialShading(Material material)
+    {
+        if (material == null) return;
+
+        // Apply surface details
+        if (normalMap != null)
+        {
+            material.SetTexture("_BumpMap", normalMap);
+            material.EnableKeyword("_NORMALMAP");
+        }
+
+        if (roughnessMap != null)
+        {
+            material.SetTexture("_MetallicGlossMap", roughnessMap);
+        }
+
+        if (metallicMap != null)
+        {
+            // Assuming both metallic and smoothness info in one map
+            material.SetTexture("_MetallicGlossMap", metallicMap);
+        }
+
+        if (occlusionMap != null)
+        {
+            material.SetTexture("_OcclusionMap", occlusionMap);
+            material.EnableKeyword("_OCCLUSIONMAP");
+        }
+
+        // Apply detail mapping for surface texture
+        if (detailAlbedo != null)
+        {
+            material.SetTexture("_DetailAlbedoMap", detailAlbedo);
+            material.SetFloat("_DetailAlbedoMapScale", detailScale);
+        }
+
+        if (detailNormal != null)
+        {
+            material.SetTexture("_DetailNormalMap", detailNormal);
+            material.SetFloat("_DetailNormalMapScale", detailNormalScale);
+            material.EnableKeyword("_DETAIL_MULX2");
+        }
+
+        // Configure anisotropic shading
+        if (enableAnisotropic)
+        {
+            material.SetFloat("_Anisotropy", anisotropicScale);
+            material.EnableKeyword("_ANISOTROPY");
+        }
+
+        // Configure clearcoat for glossy surfaces
+        if (enableClearcoat)
+        {
+            material.SetFloat("_Clearcoat", clearcoat);
+            material.SetFloat("_ClearcoatSmoothness", clearcoatRoughness);
+            material.EnableKeyword("_CLEARCOAT");
+        }
+
+        // Ensure proper rendering keywords are enabled
+        material.EnableKeyword("_SPECULAR_SETUP");
+    }
+
+    // Method to dynamically change material properties
+    public void UpdateMaterialProperties(
+        float metallic, 
+        float smoothness, 
+        float anisotropic, 
+        float clearcoatValue)
+    {
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        
+        foreach (Renderer renderer in renderers)
+        {
+            Material[] materials = renderer.sharedMaterials;
+            
+            foreach (Material material in materials)
+            {
+                if (material != null)
+                {
+                    material.SetFloat("_Metallic", metallic);
+                    material.SetFloat("_Smoothness", smoothness);
+                    
+                    if (enableAnisotropic)
+                        material.SetFloat("_Anisotropy", anisotropic);
+                        
+                    if (enableClearcoat)
+                        material.SetFloat("_Clearcoat", clearcoatValue);
+                }
+            }
+        }
+    }
+}
+```
+
+## Animation Systems for Robotics
+
+### Inverse Kinematics for Robot Arms
+
+```csharp
+using UnityEngine;
+using System.Collections;
+
+public class RobotArmIK : MonoBehaviour
+{
+    [Header("IK Configuration")]
+    public Transform target;  // The target position for the end effector
+    public Transform pole;    // Optional pole target for orientation
+    
+    [Header("Arm Configuration")]
+    public Transform[] joints;  // Should be in order: shoulder, elbow, wrist
+    public float[] boneLengths; // Length of each bone in the chain
+    
+    [Header("IK Parameters")]
+    public int iterations = 10;
+    public float delta = 0.001f;
+    public float maxDistance = 2.0f;
+    
+    [Header("Joint Limits")]
+    public bool useJointLimits = true;
+    public float[] minAngles;  // In degrees
+    public float[] maxAngles;  // In degrees
+
+    void Start()
+    {
+        if (joints == null || joints.Length == 0)
+        {
+            InitializeJoints();
+        }
+        
+        if (boneLengths == null || boneLengths.Length == 0)
+        {
+            CalculateBoneLengths();
+        }
+        
+        if (minAngles == null || maxAngles == null)
+        {
+            SetDefaultJointLimits();
+        }
+    }
+
+    void InitializeJoints()
+    {
+        // Automatically find joints if not set manually
+        Transform current = transform;
+        joints = new Transform[0];
+        
+        // This would be specific to your robot's structure
+        // Example: find joints in a specific pattern
+        // For now, we'll need joints to be assigned manually
+        Debug.LogWarning("Please assign joints manually in the inspector");
+    }
+
+    void CalculateBoneLengths()
+    {
+        if (joints.Length < 2) return;
+        
+        boneLengths = new float[joints.Length - 1];
+        
+        for (int i = 0; i < joints.Length - 1; i++)
+        {
+            boneLengths[i] = Vector3.Distance(
+                joints[i].position, 
+                joints[i + 1].position
+            );
+        }
+    }
+
+    void SetDefaultJointLimits()
+    {
+        // Default joint limits for a typical robot arm
+        if (joints != null)
+        {
+            minAngles = new float[joints.Length];
+            maxAngles = new float[joints.Length];
+            
+            for (int i = 0; i < joints.Length; i++)
+            {
+                minAngles[i] = -90f;  // Default: -90 to 90 degrees
+                maxAngles[i] = 90f;
+            }
+        }
+    }
+
+    void LateUpdate()
+    {
+        if (target != null)
+        {
+            SolveIK();
+        }
+    }
+
+    void SolveIK()
+    {
+        if (joints.Length < 2 || target == null) return;
+
+        // CCD (Cyclic Coordinate Descent) Inverse Kinematics
+        for (int iteration = 0; iteration < iterations; iteration++)
+        {
+            for (int i = joints.Length - 2; i >= 0; i--) // From end effector to base
+            {
+                Transform joint = joints[i];
+                Transform endEffector = joints[joints.Length - 1];
+
+                // Calculate vectors
+                Vector3 toTarget = target.position - joint.position;
+                Vector3 toEndEffector = endEffector.position - joint.position;
+
+                // Calculate the angle between vectors
+                float angle = Vector3.SignedAngle(toEndEffector, toTarget, Vector3.up);
+
+                // Apply rotation with limits if specified
+                if (useJointLimits)
+                {
+                    angle = Mathf.Clamp(angle, minAngles[i], maxAngles[i]);
+                }
+                
+                // Limit the angle change per iteration for stability
+                angle = Mathf.Clamp(angle, -10f, 10f);
+
+                // Rotate the joint
+                joint.Rotate(Vector3.up, angle, Space.World);
+
+                // Maintain the orientation of the chain
+                for (int j = i + 1; j < joints.Length; j++)
+                {
+                    if (j > 0)
+                    {
+                        joints[j].position = joints[j - 1].TransformPoint(
+                            joints[j - 1].InverseTransformPoint(joints[j].position)
+                        );
+                        
+                        // Maintain relative rotation
+                        joints[j].rotation = joints[j - 1].rotation;
+                    }
+                }
+            }
+
+            // Check if we've reached the target
+            float distance = Vector3.Distance(
+                joints[joints.Length - 1].position, 
+                target.position
+            );
+
+            if (distance < delta)
+            {
+                break; // Reached target
+            }
+        }
+    }
+
+    // Method to move end effector to position with rotation
+    public bool MoveToEndEffectorPose(Vector3 position, Quaternion rotation)
+    {
+        if (target != null)
+        {
+            target.position = position;
+            target.rotation = rotation;
+            return true;
+        }
+        return false;
+    }
+
+    // Method to solve IK with orientation constraints
+    public void SolveIKWithOrientation()
+    {
+        if (joints.Length < 2 || target == null) return;
+
+        // This would implement a more advanced IK solver
+        // that considers both position and orientation
+        // For simplicity, using the basic solver
+        SolveIK();
+        
+        // Apply end effector rotation to match target if needed
+        if (joints.Length > 0)
+        {
+            joints[joints.Length - 1].rotation = target.rotation;
+        }
+    }
+
+    // Visualization helper
+    void OnDrawGizmos()
+    {
+        if (joints != null)
+        {
+            for (int i = 0; i < joints.Length - 1; i++)
+            {
+                if (joints[i] != null && joints[i + 1] != null)
+                {
+                    Gizmos.color = Color.blue;
+                    Gizmos.DrawLine(joints[i].position, joints[i + 1].position);
+                }
+            }
+        }
+
+        if (target != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(target.position, 0.1f);
+        }
+    }
+}
+```
+
+### Animation Controllers for Complex Robot Motion
+
+```csharp
+using UnityEngine;
+using UnityEngine.Animations;
+using System.Collections.Generic;
+
+public class RobotAnimationController : MonoBehaviour
+{
+    [Header("Animation Configuration")]
+    public Animator animator;
+    public AnimationClip[] robotAnimations;
+    public List<RobotMotion> robotMotions = new List<RobotMotion>();
+    
+    [Header("Motion Parameters")]
+    public float walkSpeed = 1.0f;
+    public float turnSpeed = 1.0f;
+    public float animationBlendTime = 0.3f;
+
+    [System.Serializable]
+    public class RobotMotion
+    {
+        public string motionName;
+        public AnimationClip clip;
+        public MotionType motionType;
+        public float speedMultiplier = 1.0f;
+        public bool loop = true;
+        public AvatarMask mask;  // For partial body animation
+    }
+
+    public enum MotionType
+    {
+        Idle,
+        Walk,
+        Run,
+        Turn,
+        Manipulation,
+        Gesture,
+        Custom
+    }
+
+    void Start()
+    {
+        if (animator == null)
+        {
+            animator = GetComponent<Animator>();
+        }
+        
+        if (animator != null)
+        {
+            ConfigureAnimator();
+            InitializeMotions();
+        }
+    }
+
+    void ConfigureAnimator()
+    {
+        // Configure the animator controller
+        RuntimeAnimatorController controller = CreateAnimatorController();
+        if (controller != null)
+        {
+            animator.runtimeAnimatorController = controller;
+        }
+        
+        // Configure avatar if needed
+        ConfigureAvatar();
+    }
+
+    RuntimeAnimatorController CreateAnimatorController()
+    {
+        // In practice, you might load a pre-created controller or create one dynamically
+        // For this example, we'll assume the controller is set up in the editor
+        return animator.runtimeAnimatorController;
+    }
+
+    void ConfigureAvatar()
+    {
+        // Configure humanoid or custom avatar based on robot model
+        if (animator.avatar != null && animator.avatar.isHuman)
+        {
+            // Humanoid robot - can use humanoid animations
+        }
+    }
+
+    void InitializeMotions()
+    {
+        // Create motions list based on available animations
+        if (robotAnimations.Length > 0)
+        {
+            robotMotions.Clear();
+            
+            foreach (AnimationClip clip in robotAnimations)
+            {
+                MotionType motionType = DetermineMotionType(clip.name);
+                RobotMotion motion = new RobotMotion
+                {
+                    motionName = clip.name,
+                    clip = clip,
+                    motionType = motionType,
+                    speedMultiplier = 1.0f,
+                    loop = true
+                };
+                
+                robotMotions.Add(motion);
+            }
+        }
+    }
+
+    MotionType DetermineMotionType(string clipName)
+    {
+        // Determine motion type based on clip name
+        if (clipName.ToLower().Contains("idle"))
+            return MotionType.Idle;
+        else if (clipName.ToLower().Contains("walk"))
+            return MotionType.Walk;
+        else if (clipName.ToLower().Contains("run"))
+            return MotionType.Run;
+        else if (clipName.ToLower().Contains("turn"))
+            return MotionType.Turn;
+        else if (clipName.ToLower().Contains("manipulate") || clipName.ToLower().Contains("arm"))
+            return MotionType.Manipulation;
+        else if (clipName.ToLower().Contains("gesture"))
+            return MotionType.Gesture;
+        else
+            return MotionType.Custom;
+    }
+
+    // Animation control methods
+    public void PlayMotion(string motionName)
+    {
+        RobotMotion motion = FindMotion(motionName);
+        if (motion != null && animator != null)
+        {
+            animator.CrossFade(motionName, animationBlendTime);
+        }
+    }
+
+    public void PlayMotion(MotionType motionType)
+    {
+        RobotMotion motion = FindMotionByType(motionType);
+        if (motion != null && animator != null)
+        {
+            animator.CrossFade(motion.motionName, animationBlendTime);
+        }
+    }
+
+    public void BlendToMotion(string motionName, float blendTime = -1f)
+    {
+        if (animator != null)
+        {
+            float time = blendTime >= 0 ? blendTime : animationBlendTime;
+            animator.CrossFade(motionName, time);
+        }
+    }
+
+    public void SetAnimationParameter(string parameterName, float value)
+    {
+        if (animator != null)
+        {
+            animator.SetFloat(parameterName, value);
+        }
+    }
+
+    public void SetAnimationParameter(string parameterName, bool value)
+    {
+        if (animator != null)
+        {
+            animator.SetBool(parameterName, value);
+        }
+    }
+
+    public void SetAnimationParameter(string parameterName, int value)
+    {
+        if (animator != null)
+        {
+            animator.SetInteger(parameterName, value);
+        }
+    }
+
+    RobotMotion FindMotion(string name)
+    {
+        foreach (RobotMotion motion in robotMotions)
+        {
+            if (motion.motionName == name)
+                return motion;
+        }
+        return null;
+    }
+
+    RobotMotion FindMotionByType(MotionType type)
+    {
+        foreach (RobotMotion motion in robotMotions)
+        {
+            if (motion.motionType == type)
+                return motion;
+        }
+        return null;
+    }
+
+    // Complex motion sequences
+    public void PlayMotionSequence(List<string> sequence)
+    {
+        StartCoroutine(PlayMotionSequenceCoroutine(sequence));
+    }
+
+    IEnumerator PlayMotionSequenceCoroutine(List<string> sequence)
+    {
+        foreach (string motionName in sequence)
+        {
+            PlayMotion(motionName);
+            
+            // Wait for motion duration or specific trigger
+            RobotMotion motion = FindMotion(motionName);
+            if (motion != null && motion.clip != null)
+            {
+                float duration = motion.clip.length / motion.speedMultiplier;
+                yield return new WaitForSeconds(duration);
+            }
+        }
+    }
+
+    // State-based animation control
+    public void UpdateRobotState(Vector3 movementDirection, float speed)
+    {
+        if (animator == null) return;
+
+        // Calculate movement parameters
+        float forwardSpeed = Vector3.Dot(movementDirection, transform.forward);
+        float turnSpeed = Vector3.Dot(movementDirection, transform.right);
+
+        // Set animation parameters
+        animator.SetFloat("ForwardSpeed", forwardSpeed * speed);
+        animator.SetFloat("TurnSpeed", turnSpeed * turnSpeed * Mathf.Sign(turnSpeed));
+        animator.SetFloat("Velocity", speed);
+    }
+
+    // Animation event handling
+    public void OnAnimationEvent(string eventName)
+    {
+        // Handle animation events like foot steps, tool use, etc.
+        switch (eventName)
+        {
+            case "FootStep":
+                // Play footstep sound or effects
+                break;
+            case "GraspStart":
+                // Start grasping animation
+                break;
+            case "GraspEnd":
+                // End grasping animation
+                break;
+        }
+    }
+
+    // Visualization for debugging
+    void OnValidate()
+    {
+        animationBlendTime = Mathf.Max(0.01f, animationBlendTime);
+        walkSpeed = Mathf.Max(0.1f, walkSpeed);
+        turnSpeed = Mathf.Max(0.1f, turnSpeed);
+    }
+}
+```
+
+## Real-time Performance Optimization
+
+### Rendering Optimization Techniques
+
+```csharp
+using UnityEngine;
+using System.Collections.Generic;
+
+public class RoboticsRenderingOptimizer : MonoBehaviour
+{
+    [Header("LOD Configuration")]
+    [Range(1, 4)]
+    public int lodCount = 3;
+    public float[] lodDistances = { 10f, 20f, 50f };
+    
+    [Header("Culling Settings")]
+    public bool useOcclusionCulling = true;
+    public bool useFrustumCulling = true;
+    public float cullingUpdateRate = 0.1f;
+    
+    [Header("Shader Optimization")]
+    public bool useMobileShaders = false;
+    public bool enableDynamicBatching = true;
+    public bool enableStaticBatching = true;
+    
+    [Header("Performance Metrics")]
+    public bool showPerformanceMetrics = true;
+    public float targetFrameRate = 60f;
+
+    private List<Renderer> robotRenderers = new List<Renderer>();
+    private List<LODGroup> lodGroups = new List<LODGroup>();
+    private float lastCullTime = 0f;
+
+    void Start()
+    {
+        ConfigureRenderingOptimization();
+        InitializeRobots();
+    }
+
+    void ConfigureRenderingOptimization()
+    {
+        // Configure quality settings
+        QualitySettings.vSyncCount = 0; // Disabled for robotics real-time requirements
+        Application.targetFrameRate = (int)targetFrameRate;
+        
+        // Configure batching
+        if (enableDynamicBatching)
+        {
+            QualitySettings.maxQueuedJobs = 8;
+        }
+        
+        if (enableStaticBatching)
+        {
+            StaticBatchingUtility.Combine(gameObject);
+        }
+        
+        // Configure culling
+        if (useOcclusionCulling)
+        {
+            Camera.main.layerCullDistances = new float[32];
+            for (int i = 0; i < 32; i++)
+            {
+                Camera.main.layerCullDistances[i] = 1000f; // Default distance
+            }
+        }
+    }
+
+    void InitializeRobots()
+    {
+        // Find all robot renderers and set up LOD system
+        GameObject[] robots = GameObject.FindGameObjectsWithTag("Robot");
+        
+        foreach (GameObject robot in robots)
+        {
+            SetupRobotOptimization(robot);
+        }
+    }
+
+    void SetupRobotOptimization(GameObject robot)
+    {
+        // Get all renderers in the robot
+        Renderer[] renderers = robot.GetComponentsInChildren<Renderer>();
+        
+        foreach (Renderer renderer in renderers)
+        {
+            robotRenderers.Add(renderer);
+            
+            // Apply optimization settings
+            ApplyRendererOptimization(renderer);
+        }
+        
+        // Set up LOD group if not already present
+        LODGroup lodGroup = robot.GetComponent<LODGroup>();
+        if (lodGroup == null)
+        {
+            lodGroup = CreateLODGroup(robot, renderers);
+            lodGroups.Add(lodGroup);
+        }
+        else
+        {
+            lodGroups.Add(lodGroup);
+        }
+    }
+
+    LODGroup CreateLODGroup(GameObject robot, Renderer[] renderers)
+    {
+        LODGroup lodGroup = robot.AddComponent<LODGroup>();
+        
+        LOD[] lods = new LOD[lodCount];
+        
+        for (int i = 0; i < lodCount; i++)
+        {
+            float screenRelativeTransitionHeight = lodDistances[i] / 100f;
+            
+            List<Renderer> lodRenderers = new List<Renderer>();
+            
+            // Determine which renderers to include in this LOD
+            // For robotics, we might want to maintain certain visual elements
+            for (int j = 0; j < renderers.Length; j++)
+            {
+                // Use distance-based or importance-based selection
+                lodRenderers.Add(renderers[j]);
+            }
+            
+            lods[i] = new LOD(screenRelativeTransitionHeight, lodRenderers.ToArray());
+        }
+        
+        lodGroup.SetLODs(lods);
+        lodGroup.RecalculateBounds();
+        lodGroup.fadeMode = LODFadeMode.CrossFade;
+        lodGroup.animateCrossFading = true;
+        
+        return lodGroup;
+    }
+
+    void ApplyRendererOptimization(Renderer renderer)
+    {
+        // Optimize individual renderer
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+        renderer.receiveShadows = true;
+        
+        // Apply material optimization
+        OptimizeMaterials(renderer);
+        
+        // Configure light probe settings
+        renderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes;
+        renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
+    }
+
+    void OptimizeMaterials(Renderer renderer)
+    {
+        Material[] materials = renderer.sharedMaterials;
+        
+        for (int i = 0; i < materials.Length; i++)
+        {
+            if (materials[i] != null)
+            {
+                // Apply batching optimization
+                materials[i].enableInstancing = true;
+                
+                // For robotics, ensure materials are suitable for real-time
+                if (useMobileShaders)
+                {
+                    materials[i] = ConvertToMobileShader(materials[i]);
+                }
+                
+                // Optimize texture settings
+                OptimizeTextures(materials[i]);
+            }
+        }
+        
+        renderer.sharedMaterials = materials;
+    }
+
+    Material ConvertToMobileShader(Material original)
+    {
+        // Convert to simpler shader if needed for performance
+        Shader mobileShader = Shader.Find("Universal Render Pipeline/Lit");
+        if (mobileShader != null && original.shader != mobileShader)
+        {
+            Material newMaterial = new Material(mobileShader);
+            
+            // Copy relevant properties
+            newMaterial.color = original.color;
+            newMaterial.mainTexture = original.mainTexture;
+            
+            return newMaterial;
+        }
+        
+        return original;
+    }
+
+    void OptimizeTextures(Material material)
+    {
+        // Optimize texture compression and settings for performance
+        Texture[] textures = {
+            material.mainTexture,
+            material.GetTexture("_BumpMap"),
+            material.GetTexture("_MetallicGlossMap"),
+            material.GetTexture("_OcclusionMap"),
+            material.GetTexture("_DetailAlbedoMap")
+        };
+        
+        foreach (Texture texture in textures)
+        {
+            if (texture != null && texture is Texture2D tex2D)
+            {
+                // Optimize texture for real-time performance
+                // This would typically involve pre-processing the texture
+            }
+        }
+    }
+
+    void Update()
+    {
+        // Update optimizations periodically
+        if (Time.time - lastCullTime > cullingUpdateRate)
+        {
+            UpdateCulling();
+            lastCullTime = Time.time;
+        }
+        
+        UpdatePerformanceMetrics();
+    }
+
+    void UpdateCulling()
+    {
+        if (useFrustumCulling)
+        {
+            UpdateFrustumCulling();
+        }
+        
+        if (useOcclusionCulling)
+        {
+            UpdateOcclusionCulling();
+        }
+    }
+
+    void UpdateFrustumCulling()
+    {
+        // Custom frustum culling for complex robotics scenes
+        Camera mainCam = Camera.main;
+        if (mainCam == null) return;
+
+        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(mainCam);
+        
+        foreach (Renderer renderer in robotRenderers)
+        {
+            if (renderer != null)
+            {
+                renderer.enabled = GeometryUtility.TestPlanesAABB(planes, renderer.bounds);
+            }
+        }
+    }
+
+    void UpdateOcclusionCulling()
+    {
+        // Unity's built-in occlusion culling is used
+        // This method could implement custom occlusion logic if needed
+    }
+
+    void UpdatePerformanceMetrics()
+    {
+        if (!showPerformanceMetrics) return;
+
+        // Calculate and display performance metrics
+        float frameTime = Time.deltaTime;
+        float fps = 1.0f / frameTime;
+        
+        // Log performance metrics
+        if (fps < targetFrameRate * 0.8f) // 80% of target
+        {
+            Debug.LogWarning($"Performance warning: Current FPS: {fps:F1}, Target: {targetFrameRate}");
+        }
+    }
+
+    // Method to adjust optimization based on robot count
+    public void AdjustOptimizationForRobotCount(int robotCount)
+    {
+        if (robotCount > 10)
+        {
+            // Reduce quality for higher robot counts
+            QualitySettings.shadowResolution = ShadowResolution.Medium;
+            QualitySettings.shadowDistance = 30f;
+        }
+        else if (robotCount > 20)
+        {
+            // Further reduce quality
+            QualitySettings.shadowResolution = ShadowResolution.Low;
+            QualitySettings.shadowDistance = 15f;
+        }
+        else
+        {
+            // Higher quality for fewer robots
+            QualitySettings.shadowResolution = ShadowResolution.High;
+            QualitySettings.shadowDistance = 50f;
+        }
+    }
+
+    // Method to toggle optimization features
+    public void ToggleOptimizationFeature(string feature, bool enabled)
+    {
+        switch (feature.ToLower())
+        {
+            case "culling":
+                useFrustumCulling = enabled;
+                useOcclusionCulling = enabled;
+                break;
+            case "lod":
+                // LOD is always enabled but level can be adjusted
+                break;
+            case "shadows":
+                QualitySettings.shadows = enabled ? ShadowQuality.All : ShadowQuality.Disable;
+                break;
+        }
+    }
+}
+```
+
+## Visual Effects for Enhanced Realism
+
+### Particle Systems for Robotics Effects
+
+```csharp
+using UnityEngine;
+using System.Collections.Generic;
+
+public class RoboticsVisualEffects : MonoBehaviour
+{
+    [Header("Dust and Debris")]
+    public bool enableDustEffects = true;
+    public float dustEmissionRate = 10f;
+    public Color dustColor = Color.grey;
+    
+    [Header("Contact Effects")]
+    public bool enableContactEffects = true;
+    public float contactEffectRadius = 0.1f;
+    public Color contactColor = Color.white;
+    
+    [Header("Joint Effects")]
+    public bool enableJointEffects = true;
+    public float jointGlowIntensity = 0.5f;
+    public Color jointGlowColor = Color.blue;
+    
+    [Header("Dynamic Effects")]
+    public bool enableDynamicEffects = true;
+    public AnimationCurve effectIntensityCurve;
+
+    private Dictionary<Transform, ParticleSystem> contactParticleSystems;
+    private List<GameObject> jointGlowEffects;
+    private GameObject dustSystem;
+
+    void Start()
+    {
+        InitializeVisualEffects();
+    }
+
+    void InitializeVisualEffects()
+    {
+        contactParticleSystems = new Dictionary<Transform, ParticleSystem>();
+        jointGlowEffects = new List<GameObject>();
+        
+        if (enableDustEffects)
+        {
+            CreateDustSystem();
+        }
+        
+        if (enableContactEffects)
+        {
+            CreateContactEffects();
+        }
+        
+        if (enableJointEffects)
+        {
+            CreateJointEffects();
+        }
+    }
+
+    void CreateDustSystem()
+    {
+        if (dustSystem != null) return;
+
+        dustSystem = new GameObject("DustSystem");
+        dustSystem.transform.SetParent(transform);
+        
+        ParticleSystem dustPS = dustSystem.AddComponent<ParticleSystem>();
+        
+        var main = dustPS.main;
+        main.startLifetime = 2.0f;
+        main.startSpeed = 0.5f;
+        main.startSize = 0.05f;
+        main.maxParticles = 1000;
+        main.emissionRate = dustEmissionRate;
+        main.startColor = dustColor;
+        
+        var emission = dustPS.emission;
+        emission.rateOverTime = dustEmissionRate;
+        
+        var shape = dustPS.shape;
+        shape.shapeType = ParticleSystemShapeType.Cone;
+        shape.angle = 10f;
+        shape.radius = 0.1f;
+        
+        var renderer = dustPS.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Billboard;
+        renderer.material = new Material(Shader.Find("Particles/Alpha Blended"));
+    }
+
+    void CreateContactEffects()
+    {
+        // Find all contact points (simplified)
+        Transform[] contactPoints = GetComponentsInChildren<Transform>();
+        
+        foreach (Transform point in contactPoints)
+        {
+            if (ShouldCreateContactEffect(point))
+            {
+                ParticleSystem contactPS = CreateContactEffect(point);
+                contactParticleSystems[point] = contactPS;
+            }
+        }
+    }
+
+    bool ShouldCreateContactEffect(Transform transform)
+    {
+        // Determine if this transform should have a contact effect
+        // This could be based on tags, names, or other criteria
+        return transform.name.Contains("Foot") || 
+               transform.name.Contains("Wheel") || 
+               transform.name.Contains("EndEffector");
+    }
+
+    ParticleSystem CreateContactEffect(Transform parentTransform)
+    {
+        GameObject contactObj = new GameObject("ContactEffect_" + parentTransform.name);
+        contactObj.transform.SetParent(parentTransform);
+        contactObj.transform.localPosition = Vector3.zero;
+        
+        ParticleSystem contactPS = contactObj.AddComponent<ParticleSystem>();
+        
+        var main = contactPS.main;
+        main.startLifetime = 0.5f;
+        main.startSpeed = 0.1f;
+        main.startSize = 0.02f;
+        main.maxParticles = 50;
+        main.startColor = contactColor;
+        
+        var emission = contactPS.emission;
+        emission.rateOverTime = 0f; // Triggered manually
+        
+        var shape = contactPS.shape;
+        shape.shapeType = ParticleSystemShapeType.Sphere;
+        shape.radius = contactEffectRadius;
+        
+        return contactPS;
+    }
+
+    void CreateJointEffects()
+    {
+        Transform[] joints = GetComponentsInChildren<Transform>();
+        
+        foreach (Transform joint in joints)
+        {
+            if (IsJoint(joint))
+            {
+                CreateJointGlowEffect(joint);
+            }
+        }
+    }
+
+    bool IsJoint(Transform transform)
+    {
+        // Simplified joint detection
+        return transform.name.Contains("Joint") || 
+               transform.name.Contains("Link") ||
+               transform.GetComponent<Rigidbody>() != null;
+    }
+
+    void CreateJointGlowEffect(Transform joint)
+    {
+        GameObject glowObj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        glowObj.name = "JointGlow_" + joint.name;
+        glowObj.transform.SetParent(joint);
+        glowObj.transform.localPosition = Vector3.zero;
+        glowObj.transform.localScale = Vector3.one * 0.02f;
+        
+        Renderer glowRenderer = glowObj.GetComponent<Renderer>();
+        
+        // Create emissive material for glow effect
+        Material glowMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+        glowMat.SetColor("_BaseColor", jointGlowColor);
+        glowMat.EnableKeyword("_EMISSION");
+        glowMat.SetColor("_EmissionColor", jointGlowColor * jointGlowIntensity);
+        
+        glowRenderer.sharedMaterials = new Material[] { glowMat };
+        
+        // Make it a glow effect
+        glowRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+        glowRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+        
+        jointGlowEffects.Add(glowObj);
+        
+        // Destroy the collider from the primitive
+        DestroyImmediate(glowObj.GetComponent<Collider>());
+    }
+
+    // Trigger contact effect
+    public void TriggerContactEffect(Transform contactPoint)
+    {
+        if (contactParticleSystems.ContainsKey(contactPoint))
+        {
+            ParticleSystem contactPS = contactParticleSystems[contactPoint];
+            
+            // Briefly enable emission
+            var emission = contactPS.emission;
+            emission.rateOverTime = 100f; // High rate for brief moment
+            
+            // Disable after brief time
+            StartCoroutine(DisableEmissionAfterDelay(contactPS, 0.1f));
+        }
+    }
+
+    System.Collections.IEnumerator DisableEmissionAfterDelay(ParticleSystem ps, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        var emission = ps.emission;
+        emission.rateOverTime = 0f;
+    }
+
+    // Update joint effects
+    void Update()
+    {
+        if (enableDynamicEffects)
+        {
+            UpdateDynamicEffects();
+        }
+    }
+
+    void UpdateDynamicEffects()
+    {
+        // Update effect intensities based on animation curve
+        float curveValue = effectIntensityCurve.Evaluate(Time.time);
+        
+        // Update joint glow intensities
+        foreach (GameObject jointGlow in jointGlowEffects)
+        {
+            Renderer renderer = jointGlow.GetComponent<Renderer>();
+            if (renderer != null && renderer.sharedMaterials.Length > 0)
+            {
+                Material mat = renderer.sharedMaterials[0];
+                Color glowColor = mat.GetColor("_EmissionColor");
+                mat.SetColor("_EmissionColor", glowColor * curveValue * jointGlowIntensity);
+            }
+        }
+    }
+
+    // Visual effect control methods
+    public void SetEffectEnabled(string effectType, bool enabled)
+    {
+        switch (effectType.ToLower())
+        {
+            case "dust":
+                enableDustEffects = enabled;
+                if (dustSystem != null) dustSystem.SetActive(enabled);
+                break;
+            case "contact":
+                enableContactEffects = enabled;
+                break;
+            case "joint":
+                enableJointEffects = enabled;
+                foreach (GameObject jointGlow in jointGlowEffects)
+                {
+                    if (jointGlow != null) jointGlow.SetActive(enabled);
+                }
+                break;
+        }
+    }
+
+    public void AdjustEffectParameter(string effectType, float value)
+    {
+        switch (effectType.ToLower())
+        {
+            case "dustemission":
+                dustEmissionRate = value;
+                if (dustSystem != null)
+                {
+                    var emission = dustSystem.GetComponent<ParticleSystem>().emission;
+                    emission.rateOverTime = value;
+                }
+                break;
+            case "jointglow":
+                jointGlowIntensity = value;
+                break;
+        }
+    }
+}
+```
+
+## Exercises and Self-Check
+
+1. **Material Implementation**: Create PBR materials for a robot's different components (structural, actuator, sensor) with appropriate metallic, roughness, and color properties.
+
+2. **Animation Setup**: Implement an inverse kinematics system for a robot arm that can reach a target position and orientation.
+
+3. **Performance Optimization**: Apply LOD and batching techniques to optimize a scene with multiple robots, measuring the performance improvement.
+
+4. **Visual Effects**: Create particle systems for robot joint visualization and contact point effects during movement.
+
+5. **Rendering Pipeline**: Configure URP for a robotics scene with appropriate lighting and post-processing settings.
+
+## Summary
+
+High-fidelity rendering and animation in Unity provide the capabilities needed to create photorealistic robotics simulations and visualizations. Advanced material systems, sophisticated animation controllers, and optimization techniques ensure that robotics applications can achieve the visual quality required for various use cases while maintaining real-time performance.
+
+The techniques covered in this chapter enable the creation of professional robotics visualizations suitable for training computer vision models, creating realistic simulations for algorithm development, and providing intuitive visual feedback for robot operators and developers. Proper implementation of these techniques is essential for creating effective digital twins and simulation environments for robotics applications.
+
+---
+
+**Keywords**: High-Fidelity Rendering, Animation, Inverse Kinematics, PBR Materials, Visual Effects, Robotics Visualization, Performance Optimization

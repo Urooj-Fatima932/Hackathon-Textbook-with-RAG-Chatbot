@@ -1,0 +1,9 @@
+{
+  "label": "Week 3: ROS2 Architecture",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "title": "Week 3: ROS2 Architecture and Components",
+    "description": "Exploring ROS2 architecture, nodes, topics, services, and launch files."
+  }
+}

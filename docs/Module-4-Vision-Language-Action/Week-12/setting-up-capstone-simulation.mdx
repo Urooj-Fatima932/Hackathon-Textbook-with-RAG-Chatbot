@@ -1,0 +1,43 @@
+---
+sidebar_position: 2
+---
+
+# Setting Up the Full Capstone Simulation Environment
+
+This chapter will guide you through the process of setting up the complete simulation environment for the capstone project. A well-configured simulation is crucial for the success of this project, as it provides the foundation for all subsequent development and testing.
+
+## Environment Components
+
+The simulation environment consists of the following key components:
+
+1.  **NVIDIA Isaac Sim**: The primary simulation platform.
+2.  **Humanoid Robot URDF**: The model of our humanoid robot.
+3.  **ROS 2 Integration**: To control the robot and process sensor data.
+4.  **Gazebo Bridge**: To connect Isaac Sim with ROS 2.
+5.  **LLM and VLM Services**: For cognitive planning and vision-language processing.
+
+## Step 1: Installing and Configuring NVIDIA Isaac Sim
+
+Ensure you have the latest version of NVIDIA Isaac Sim installed. Refer to the official documentation for installation instructions. Once installed, you will need to configure the simulator for optimal performance and to enable the necessary extensions, such as the ROS 2 bridge.
+
+## Step 2: Importing the Humanoid Robot Model
+
+You will be provided with a URDF (Unified Robot Description Format) file for the humanoid robot. This file defines the robot's physical properties, including its links, joints, and sensors. Import this URDF into your Isaac Sim scene.
+
+## Step 3: Setting Up the ROS 2 Bridge
+
+The ROS 2 bridge is essential for communication between Isaac Sim and your ROS 2 nodes. Configure the bridge to publish sensor data (e.g., camera images, LiDAR scans) from the simulation to ROS 2 topics and to subscribe to control commands from your ROS 2 nodes.
+
+## Step 4: Integrating AI Services
+
+The capstone project requires the integration of Large Language Models (LLMs) and Vision-Language Models (VLMs). You will need to set up the necessary API clients or local services to connect your ROS 2 application with these AI models. This will typically involve creating a dedicated ROS 2 service or action server to handle the communication.
+
+## Step 5: Creating the Simulation Scene
+
+Finally, you will assemble the complete simulation scene. This includes:
+
+*   Placing the humanoid robot in the environment.
+*   Adding objects for the robot to interact with.
+*   Configuring the lighting and camera angles for optimal visualization.
+
+By the end of this setup process, you will have a fully functional simulation environment that is ready for the implementation of the perception, navigation, and manipulation pipelines in the subsequent chapters.

@@ -1,0 +1,39 @@
+---
+sidebar_position: 3
+---
+
+# Implementing the Capstone Perception Pipeline
+
+A robust perception pipeline is the foundation of any autonomous robot. This chapter will cover the implementation of the perception system for our humanoid robot, enabling it to see, understand, and interact with its environment.
+
+## Perception Goals
+
+The primary goals of the capstone perception pipeline are:
+
+1.  **Object Detection and Recognition**: Identify and classify objects in the scene.
+2.  **Scene Understanding**: Build a semantic representation of the environment.
+3.  **Multi-Modal Fusion**: Combine information from multiple sensors (e.g., camera, LiDAR) to create a comprehensive world model.
+
+## Step 1: Camera and Image Processing
+
+The robot's camera is its primary sensor for perception. You will implement a ROS 2 node that subscribes to the camera's image topic and performs the following operations:
+
+*   **Image Pre-processing**: Correct for distortion, noise, and lighting variations.
+*   **Feature Extraction**: Identify key features in the image, such as edges, corners, and textures.
+
+## Step 2: Object Detection with a VLM
+
+We will use a pre-trained Vision-Language Model (VLM) for object detection and recognition. You will create a ROS 2 client that sends camera images to the VLM service and receives a list of detected objects, their bounding boxes, and their class labels.
+
+## Step 3: Integrating LiDAR Data
+
+LiDAR provides accurate depth information, which is crucial for navigation and manipulation. You will write a ROS 2 node to process the raw LiDAR data and:
+
+*   **Cluster Point Clouds**: Group points into distinct objects.
+*   **Fuse with Camera Data**: Associate LiDAR clusters with the objects detected by the VLM.
+
+## Step 4: Building a World Model
+
+The final step in the perception pipeline is to build a cohesive world model that integrates all the processed sensor data. This model will be represented as a semantic map, which contains information about the location, size, and class of all objects in the environment. This world model will be the primary input for the cognitive planning and navigation systems.
+
+By the end of this chapter, your humanoid robot will have a sophisticated perception system that allows it to make sense of its surroundings, paving the way for the implementation of autonomous behaviors in the next week.

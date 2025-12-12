@@ -1,0 +1,259 @@
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+ .heroBanner {
+  padding: 6rem 0 8rem 0;
+  position: relative;
+  background-color: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+}
+
+[data-theme='dark'] .heroBanner {
+  background-color: #080808;
+  color: #ff9900;
+}
+
+.heroContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.heroText {
+  flex-basis: 60%;
+}
+
+.hero__subtitle {
+  /* color: lightgrey; inherited from heroBanner and overridden by theme */
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 2rem;
+  }
+  .heroContainer {
+    flex-direction: column;
+  }
+  .heroText {
+    flex-basis: 100%;
+    text-align: center;
+   
+  }
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+@media screen and (max-width: 996px) {
+  .buttons {
+    justify-content: center;
+  }
+}
+
+.placeholderImage {
+  flex-basis: 40%;
+  height: 500px;
+  border-radius: 8px;
+  margin-left: 32px;
+  width: 100%;
+  object-fit: cover;
+  box-shadow: 0 0 15px 5px rgba(255, 153, 0, 0.2); /* Light glow for light theme */
+  animation: pulseGlow 2s infinite alternate; /* Subtle animation */
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 15px 5px rgba(255, 153, 0, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 25px 8px rgba(255, 153, 0, 0.4);
+  }
+}
+
+[data-theme='dark'] .placeholderImage {
+  box-shadow: 0 0 15px 5px rgba(255, 153, 0, 0.4); /* Darker glow for dark theme */
+}
+
+[data-theme='dark'] @keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 15px 5px rgba(255, 153, 0, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 25px 8px rgba(255, 153, 0, 0.7);
+  }
+}
+
+
+@media screen and (max-width: 996px) {
+  .placeholderIllustration {
+    height: 300px;
+    margin-left: 0;
+    margin-top: 32px;
+    width: 100%;
+  }
+}
+
+.logosContainer {
+  padding: 2rem 0;
+  background-color: var(--ifm-background-color);
+}
+
+[data-theme='dark'] .logosContainer {
+  background-color: #000;
+}
+
+.logos {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  filter: grayscale(100%);
+  opacity: 0.6;
+}
+
+.logos span {
+  font-size: 1.5rem;
+  color: var(--ifm-font-color-base);
+}
+
+[data-theme='dark'] .logos span {
+  color: #fff;
+}
+
+.modulesSection {
+  padding: 4rem 0;
+  background-color: var(--ifm-background-color);
+}
+
+[data-theme='dark'] .modulesSection {
+  background-color: #080808;
+}
+
+.modules {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.moduleCard {
+  flex: 1 1 calc(25% - 24px);
+  max-width: calc(25% - 24px);
+  min-width: 250px;
+  background-color: #FFFFFF; /* Light background for light theme */
+  border: 1px solid #E0E0E0; /* Light border for light theme */
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px 5px rgba(255, 153, 0, 0.1); /* Initial subtle glow */
+  animation: pulseGlowCards 3s infinite alternate; /* Subtle pulsing glow animation */
+}
+
+[data-theme='dark'] .moduleCard {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  box-shadow: 0 0 15px 5px rgba(255, 153, 0, 0.2); /* Darker glow for dark theme */
+}
+
+.moduleCard:hover {
+  transform: translateY(-5px);
+  border-color: #ff9900;
+  box-shadow: 0 0 20px 8px rgba(255, 153, 0, 0.3); /* Enhanced glow on hover */
+}
+.keyConceptsContainer {
+    padding: 4rem 0;
+    background-color: var(--ifm-background-color);
+  }
+
+[data-theme='dark'] .keyConceptsContainer {
+  background-color: #080808;
+}
+
+  .keyConceptsSectionTitle {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    color: var(--ifm-font-color-base);
+  }
+
+[data-theme='dark'] .keyConceptsSectionTitle {
+    color: #fff;
+  }
+
+  .keyConceptsGrid {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+
+  .keyConceptCard {
+    flex: 1 1 calc(25% - 24px);
+    max-width: calc(25% - 24px);
+    min-width: 250px;
+    background-color: #FFFFFF; /* Light background for light theme */
+    border: 1px solid #E0E0E0; /* Light border for light theme */
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 0 15px 5px rgba(255, 153, 0, 0.1); /* Initial subtle glow */
+    animation: pulseGlowCards 3s infinite alternate; /* Subtle pulsing glow animation */
+  }
+
+  .keyConceptCard:hover {
+    transform: translateY(-5px);
+    border-color: #ff9900;
+    box-shadow: 0 0 20px 8px rgba(255, 153, 0, 0.3); /* Enhanced glow on hover */
+  }
+
+  [data-theme='dark'] .keyConceptCard {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    box-shadow: 0 0 15px 5px rgba(255, 153, 0, 0.2); /* Darker glow for dark theme */
+  }
+
+  [data-theme='dark'] .keyConceptCard:hover {
+    box-shadow: 0 0 25px 10px rgba(255, 153, 0, 0.4); /* Enhanced glow on hover in dark mode */
+  }
+
+  @keyframes pulseGlowCards {
+    0% {
+      box-shadow: 0 0 10px 3px rgba(255, 153, 0, 0.1);
+    }
+    100% {
+      box-shadow: 0 0 20px 6px rgba(255, 153, 0, 0.2);
+    }
+  }
+
+  [data-theme='dark'] @keyframes pulseGlowCards {
+    0% {
+      box-shadow: 0 0 10px 3px rgba(255, 153, 0, 0.2);
+    }
+    100% {
+      box-shadow: 0 0 25px 8px rgba(255, 153, 0, 0.3);
+    }
+  }
+
+  .keyConceptCard h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--ifm-font-color-base);
+  }
+
+  [data-theme='dark'] .keyConceptCard h3 {
+    color: #fff;
+  }
+
+  .keyConceptCard p {
+    font-size: 1rem;
+    color: var(--ifm-font-color-base);
+  }
+
+  [data-theme='dark'] .keyConceptCard p {
+    color: #ccc;
+  }

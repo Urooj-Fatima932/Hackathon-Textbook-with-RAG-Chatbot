@@ -1,0 +1,145 @@
+# Exercises and Self-Check Questions - Week 10: LLM Cognitive Planning
+
+## Chapter 1: Translating Natural Language to Robot Actions (Voice-to-Action)
+
+### Voice Recognition and Processing
+1. **System Design**: Design a voice-to-action system for a domestic robot that can understand commands like "Turn on the living room lights" and "Bring me my glasses from the bedroom." What components would you include?
+
+2. **Speech Recognition Challenges**: Identify and explain three challenges of speech recognition in robotic environments and suggest solutions for each.
+
+3. **Intent Classification**: Create an intent classification system for a robot assistant with at least 10 common household action intents (navigation, manipulation, information).
+
+4. **Entity Extraction**: For the command "Take the red mug from the kitchen counter to the dining table," identify the entities and their types that need to be recognized.
+
+### Natural Language Understanding
+5. **Ambiguity Resolution**: How would your system handle the command "Go to the table" if there are multiple tables in the environment?
+
+6. **Reference Resolution**: Explain how your system would interpret the command "Move the object on the left" when there are multiple objects.
+
+7. **Deixis Handling**: How would the system interpret "Put it there" where "there" refers to a location in the environment?
+
+8. **Multi-step Commands**: Break down the command "Go to the kitchen and bring me a glass of water" into individual action steps.
+
+### Safety and Validation
+9. **Safety Validation**: Design a safety validation framework for voice commands that could potentially harm humans or property.
+
+10. **Command Filtering**: How would you prevent the robot from executing unsafe or inappropriate voice commands?
+
+11. **Error Handling**: Design error handling for when the robot misunderstands a command or cannot execute it.
+
+12. **User Feedback**: How would the robot communicate to the user that it understood or failed to execute a command?
+
+## Chapter 2: Generating and Executing ROS 2 Commands from an LLM
+
+### LLM Integration
+1. **Interface Design**: Design an interface between an LLM and a ROS 2 system for home robotics. What safety mechanisms would you include?
+
+2. **Prompt Engineering**: Create effective prompts for translating the natural language command "Navigate to the couch and wait there" into ROS 2 navigation commands.
+
+3. **Command Generation**: Generate the sequence of ROS 2 actions (services, topics, actions) that would implement "Pick up the blue pen from the desk and place it in the drawer."
+
+4. **Validation Framework**: Design a multi-layered validation system for LLM-generated ROS commands.
+
+### Safety and Reliability
+5. **Safety Validation**: What validation checks would you implement to ensure an LLM-generated navigation command is safe to execute?
+
+6. **Parameter Validation**: How would you validate that LLM-generated parameters (coordinates, velocities, etc.) are within safe ranges?
+
+7. **Resource Checking**: How would you verify that required robot resources are available before executing LLM-generated commands?
+
+8. **Simulation Validation**: Design a pre-execution validation system that tests LLM commands in simulation before real execution.
+
+### Error Handling and Recovery
+9. **LLM Output Errors**: How would you handle a case where the LLM generates syntactically correct but semantically invalid ROS commands?
+
+10. **Execution Failures**: Design a recovery system for when LLM-generated ROS commands fail during execution.
+
+11. **Contradiction Handling**: How would you handle contradictory LLM-generated commands received in quick succession?
+
+12. **Fallback Procedures**: What fallback procedures would you implement if LLM integration fails?
+
+## Chapter 3: Building a High-Level Cognitive Execution Pipeline
+
+### Architecture Design
+1. **System Architecture**: Design a cognitive execution pipeline for a robot that needs to perform "Clean the living room" (identifying objects to move, cleaning surfaces, organizing items). What modules would you include?
+
+2. **Hierarchical Planning**: Design a hierarchical task network for the task "Prepare tea for two guests" (navigating, retrieving items, pouring, serving).
+
+3. **Information Flow**: How would information flow between perception, reasoning, planning, and execution modules in your cognitive pipeline?
+
+4. **Memory Management**: Design a memory system for your cognitive pipeline that maintains relevant context across a multi-step task.
+
+### Perception and Reasoning
+5. **Multimodal Integration**: How would you integrate visual, tactile, and auditory information in your cognitive pipeline?
+
+6. **Context Awareness**: Design a system that adapts its behavior based on environmental context (time of day, human presence, room type).
+
+7. **Uncertainty Management**: How would your cognitive pipeline handle uncertain perceptual information during task execution?
+
+8. **Knowledge Representation**: Design a knowledge representation system for your cognitive pipeline that handles both static and dynamic information.
+
+### Execution and Monitoring
+9. **Task Monitoring**: Design a system to monitor a multi-step task and detect when it goes off-track.
+
+10. **Exception Handling**: How would your cognitive pipeline handle unexpected obstacles or failures during task execution?
+
+11. **Replanning**: Design a mechanism for your pipeline to replan when initial plans become invalid.
+
+12. **Human Interaction**: How would your cognitive pipeline interact with humans when it encounters uncertainty or needs assistance?
+
+## Synthesis Questions (Cross-Chapter)
+
+1. **Complete System Integration**: Design a complete system that takes a natural language command, processes it through an LLM, and executes it via a cognitive pipeline. What are the key integration points?
+
+2. **Safety Framework**: Create a comprehensive safety framework that spans voice recognition, LLM processing, and cognitive pipeline execution.
+
+3. **Performance Optimization**: How would you optimize the performance of a system that integrates voice recognition, LLM processing, and cognitive pipeline execution?
+
+4. **Error Propagation**: Analyze how errors in voice recognition could propagate through LLM processing to cognitive execution, and design mitigation strategies.
+
+5. **Evaluation Framework**: Design evaluation criteria for a system that combines voice-to-action, LLM-ROS integration, and cognitive execution capabilities.
+
+## Practical Implementation Projects
+
+1. **Voice-Controlled Robot**: Implement a simple voice-to-ROS system that allows a robot to navigate to named locations using speech commands.
+
+2. **LLM-ROS Integration**: Create a system that translates simple natural language commands (like "move forward 1 meter") into ROS 2 actions.
+
+3. **Cognitive Pipeline**: Build a basic cognitive pipeline that can execute a simple manipulation task like picking up an object and placing it somewhere else.
+
+4. **Integrated System**: Integrate voice recognition, LLM processing, and cognitive pipeline to implement a complete task like "Get me the red cup from the kitchen."
+
+## Advanced Questions
+
+1. **Scalability**: How would you scale your voice-to-action system to handle multiple simultaneous users in a multi-robot environment?
+
+2. **Learning Integration**: How would you incorporate learning into each component (voice recognition, LLM interaction, cognitive pipeline) to improve performance over time?
+
+3. **Privacy Considerations**: How would you design privacy safeguards for a system that processes voice commands and executes robotic actions?
+
+4. **Robustness**: How would you make your integrated system robust to degraded performance in any component (noisy audio, LLM errors, perception failures)?
+
+## Self-Assessment Rubric
+
+Rate your understanding of each concept from 1-5 (5 = expert level):
+
+**Chapter 1:**
+- Voice recognition challenges: ___/5
+- Natural language understanding: ___/5
+- Intent classification: ___/5
+- Entity extraction: ___/5
+- Safety validation: ___/5
+
+**Chapter 2:**
+- LLM-ROS integration: ___/5
+- Command validation: ___/5
+- Error handling: ___/5
+- Safety mechanisms: ___/5
+- Prompt engineering: ___/5
+
+**Chapter 3:**
+- Cognitive pipeline architecture: ___/5
+- Task planning and decomposition: ___/5
+- Multimodal integration: ___/5
+- Execution monitoring: ___/5
+- Exception handling: ___/5

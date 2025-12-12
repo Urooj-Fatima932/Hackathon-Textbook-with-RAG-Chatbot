@@ -1,0 +1,122 @@
+# Exercises and Self-Check Questions - Week 7: Isaac Sim Fundamentals
+
+## Chapter 1: Overview of the NVIDIA Isaac Platform
+
+### Platform Components and Architecture
+1. **Architecture Analysis**: Compare the key components of NVIDIA Isaac with those of alternative simulation platforms like Gazebo and Unity Robotics.
+
+2. **Use Case Evaluation**: For each of the following applications, evaluate whether Isaac would be the optimal choice and justify your decision: warehouse automation, autonomous driving, service robotics, research prototyping.
+
+3. **Hardware Requirements**: Analyze the minimum and recommended hardware requirements for running Isaac Sim with 5 robots simultaneously, each with RGB-D cameras and LiDAR sensors.
+
+4. **Integration Strategy**: Design an integration strategy for incorporating Isaac Sim into an existing ROS 2-based robotics project.
+
+### Isaac Sim Capabilities
+5. **Simulation Features**: Identify the top 5 features of Isaac Sim that differentiate it from other robotics simulation platforms.
+
+6. **Multi-Robot Scenarios**: How would you configure Isaac Sim to simulate a team of 10 mobile robots operating in a shared warehouse environment?
+
+7. **Performance Considerations**: What factors would you consider when optimizing Isaac Sim performance for a complex multi-robot scenario?
+
+8. **Development Workflow**: Outline the development workflow from initial concept to deployment when using Isaac Sim.
+
+## Chapter 2: Generating Synthetic Data for Training
+
+### Domain Randomization
+1. **Randomization Strategy**: Design a domain randomization strategy for training a robot to recognize and grasp household objects under various lighting conditions.
+
+2. **Quality Assessment**: How would you evaluate the effectiveness of synthetic data for training a perception model intended for real-world deployment?
+
+3. **Computational Trade-offs**: Analyze the trade-offs between rendering quality, domain randomization extent, and data generation speed for synthetic datasets.
+
+4. **Dataset Design**: Create a specification for a synthetic dataset to train a navigation system for indoor robots, including diversity requirements and annotation needs.
+
+### Synthetic Data Applications
+5. **Perception Training**: How would you use synthetic data to train object detection for a robot operating in a manufacturing environment?
+
+6. **Sim-to-Real Transfer**: What techniques would you use to ensure synthetic data training transfers effectively to real-world performance?
+
+7. **Large-Scale Generation**: Design a pipeline for generating 100,000 synthetic images for training a vision system, including automation and quality control.
+
+8. **Multi-Modal Data**: How would you generate consistent synthetic data across multiple sensor modalities (camera, LiDAR, IMU)?
+
+### Validation and Assessment
+9. **Validation Framework**: Design a validation framework to assess the quality of synthetic data for robotics applications.
+
+10. **Realism Metrics**: What metrics would you use to assess the realism of generated synthetic data?
+
+## Chapter 3: Isaac Sim for Perception and Computer Vision
+
+### Sensor Simulation
+1. **Sensor Configuration**: Configure a multi-sensor suite for a mobile robot in Isaac Sim that needs to operate in low-light conditions and explain your choices.
+
+2. **Data Pipeline**: Design a perception data pipeline in Isaac Sim that processes RGB, depth, and IMU data in real-time for obstacle detection.
+
+3. **Cross-Validation**: How would you validate that simulated sensors accurately represent their real-world counterparts?
+
+4. **Calibration Process**: Design a sensor calibration workflow using Isaac Sim, including both intrinsic and extrinsic calibration.
+
+### Computer Vision Algorithms
+5. **Algorithm Development**: How would you develop and test a SLAM algorithm using Isaac Sim's perception capabilities?
+
+6. **Real-Time Considerations**: What optimization techniques would you apply to ensure real-time performance for a complex perception pipeline in Isaac Sim?
+
+7. **Performance Metrics**: Identify the key performance metrics for evaluating perception system performance in Isaac Sim.
+
+8. **Failure Analysis**: Design a method to systematically analyze and categorize failures in perception algorithms tested in Isaac Sim.
+
+### Perception System Integration
+9. **Multi-Modal Fusion**: How would you implement sensor fusion for camera, LiDAR, and IMU data in Isaac Sim?
+
+10. **Dynamic Scenarios**: Design perception testing scenarios that include dynamic objects and changing environments.
+
+11. **Safety Validation**: How would you validate the safety-critical aspects of a perception system in Isaac Sim?
+
+12. **Edge Cases**: What edge cases would you specifically test for a perception system intended for outdoor navigation?
+
+## Synthesis Questions (Cross-Chapter)
+
+1. **Complete System Design**: Design a complete perception system for a warehouse robot using Isaac Sim, including sensor setup, synthetic data generation, and validation methodology.
+
+2. **Platform Selection**: When would you choose Isaac Sim over other simulation platforms for perception development? Provide specific scenarios with justification.
+
+3. **Performance Optimization**: How would you optimize a perception system for both accuracy and computational efficiency using Isaac Sim's capabilities?
+
+4. **Sim-to-Real Transfer**: What comprehensive approach would you take to ensure effective transfer from Isaac Sim-based perception development to real robot deployment?
+
+5. **Quality Assurance**: Design a quality assurance process for perception systems developed with Isaac Sim synthetic data.
+
+## Hands-on Projects
+
+1. **Synthetic Dataset Creation**: Design a complete project to create a synthetic dataset for training a robot to navigate indoor environments with people.
+
+2. **Perception Pipeline**: Develop a perception pipeline in Isaac Sim that detects and tracks humans in a dynamic environment.
+
+3. **Multi-Modal System**: Create a multi-modal perception system using Isaac Sim that fuses camera and LiDAR data for object detection.
+
+4. **Validation Framework**: Build a comprehensive validation framework for perception systems using Isaac Sim's tools and features.
+
+## Self-Assessment Rubric
+
+Rate your understanding of each concept from 1-5 (5 = expert level):
+
+**Chapter 1:**
+- Isaac Platform components: ___/5
+- Architecture and capabilities: ___/5
+- Platform comparison: ___/5
+- Integration considerations: ___/5
+- Performance factors: ___/5
+
+**Chapter 2:**
+- Synthetic data principles: ___/5
+- Domain randomization: ___/5
+- Data generation pipelines: ___/5
+- Quality assessment: ___/5
+- Sim-to-real transfer: ___/5
+
+**Chapter 3:**
+- Sensor simulation: ___/5
+- Perception algorithms: ___/5
+- Real-time optimization: ___/5
+- Validation techniques: ___/5
+- Multi-modal fusion: ___/5

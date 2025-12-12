@@ -1,0 +1,131 @@
+# Exercises and Self-Check Questions - Week 8: Navigation & Bipedal Control
+
+## Chapter 1: Implementing Nav2 for Humanoid Path Planning
+
+### Nav2 Architecture and Configuration
+1. **System Configuration**: Design a Nav2 configuration file for a humanoid robot with 20+ degrees of freedom. What specific parameters would you adjust compared to a wheeled robot?
+
+2. **Behavior Tree Design**: Create a behavior tree for humanoid navigation that includes balance checking and step planning nodes. How would these differ from standard mobile robot behavior trees?
+
+3. **Global Planner Adaptation**: How would you modify a standard global planner to account for humanoid-specific constraints like step placement and balance?
+
+4. **Recovery Behaviors**: Design specialized recovery behaviors for humanoid robots that prioritize balance recovery over path following.
+
+### Path Planning Challenges
+5. **Step Planning**: Explain how to integrate footstep planning with traditional 2D path planning for humanoid navigation.
+
+6. **Kinematic Constraints**: How would you account for humanoid robot kinematic constraints in the path planning process?
+
+7. **3D Navigation**: Design a navigation approach for a humanoid robot that must navigate uneven terrain with obstacles.
+
+8. **Gait Integration**: How would you adapt the navigation system to different gaits (walking, crawling, climbing)?
+
+### Integration Questions
+9. **Balance Control**: How would you integrate Nav2 path planning with humanoid balance control systems?
+
+10. **Sensor Integration**: What sensors would you include for humanoid navigation and how would you integrate them with Nav2?
+
+## Chapter 2: Dynamic Balancing and Locomotion Control
+
+### Balance Control Fundamentals
+1. **ZMP Theory**: Calculate and explain the Zero Moment Point for a simple inverted pendulum model. How does it relate to balance stability?
+
+2. **Balance Strategies**: Compare the ankle strategy, hip strategy, and stepping strategy for push recovery in humanoid robots.
+
+3. **Capture Point**: Explain the concept of capture point and how it's used in humanoid balance control.
+
+4. **Centroidal Dynamics**: How would you use centroidal momentum for balance control in a humanoid robot?
+
+### Control Implementation
+5. **Controller Design**: Design a hierarchical balance controller with position, velocity, and force control layers.
+
+6. **Whole-Body Control**: Explain how to implement whole-body control for coordinated balance maintenance.
+
+7. **Disturbance Rejection**: Design a controller that can reject disturbances while maintaining balance.
+
+8. **Compliance Control**: How would you implement impedance control for safe human-robot interaction during balance?
+
+### Locomotion Control
+9. **Walking Patterns**: Design a walking pattern generator that creates stable gaits for different speeds and terrains.
+
+10. **Multi-Contact Balance**: How would you maintain balance with multiple contact points (hands and feet)?
+
+11. **Terrain Adaptation**: Design a system that adapts balance control for different terrain types (rough, slippery, stairs).
+
+12. **Reactive Control**: Implement a reactive balance control system that responds to unexpected disturbances.
+
+## Chapter 3: Grasping and Manipulation with Isaac Sim
+
+### Isaac Sim Manipulation
+1. **Simulation Setup**: Configure an Isaac Sim environment for training a robotic arm to grasp household objects. What physics parameters would you adjust?
+
+2. **Grasp Planning**: Design a grasp planning pipeline that combines visual information with force control for reliable grasping.
+
+3. **Sensor Integration**: How would you combine vision, tactile, and force sensors for robust manipulation in Isaac Sim?
+
+4. **Contact Physics**: Explain how Isaac Sim models contact physics for manipulation tasks and why this is important.
+
+### Manipulation Algorithms
+5. **Grasp Stability**: Design a method to evaluate grasp stability in simulation and predict grasp success/failure.
+
+6. **Force Control**: Implement a hybrid force/position control system for delicate manipulation tasks.
+
+7. **Learning-Based Grasping**: How would you use Isaac Sim to generate training data for a learning-based grasping system?
+
+8. **Multi-Fingered Hands**: Design a control system for a multi-fingered robotic hand in Isaac Sim.
+
+### Advanced Manipulation
+9. **Dexterous Manipulation**: How would you implement in-hand manipulation (reorienting objects within the hand grip)?
+
+10. **Tool Use**: Design a manipulation system that can use external tools effectively.
+
+11. **Assembly Tasks**: Create a manipulation system for simple assembly tasks involving multiple objects.
+
+12. **Human-Robot Collaboration**: How would you ensure safe manipulation when robots work with humans?
+
+## Synthesis Questions (Cross-Chapter)
+
+1. **Complete System Integration**: Design a complete humanoid robot system that integrates navigation, balance control, and manipulation. How do these systems interact?
+
+2. **Simulation-to-Reality Transfer**: Develop a comprehensive approach to ensure a manipulation and navigation system developed in Isaac Sim works effectively on a real humanoid robot.
+
+3. **Multi-Modal Integration**: How would you coordinate vision, force control, and balance systems for a humanoid robot performing complex manipulation tasks while navigating?
+
+4. **Safety System**: Design a safety system that prevents falls during navigation and manipulation, with appropriate recovery behaviors.
+
+5. **Performance Optimization**: How would you optimize a humanoid system for both energy efficiency and task performance across navigation, balance, and manipulation?
+
+## Hands-on Projects
+
+1. **Navigation Challenge**: Implement Nav2 for a humanoid robot in Isaac Sim, including custom behavior trees for balance.
+
+2. **Balance Control**: Design and test a balance controller in Isaac Sim that maintains stability during dynamic movements.
+
+3. **Manipulation Task**: Create a manipulation system in Isaac Sim that can grasp and move objects of various shapes and weights.
+
+4. **Integration Project**: Combine navigation, balance, and manipulation in a single Isaac Sim scenario where the robot must navigate to pick up an object and return it.
+
+## Self-Assessment Rubric
+
+Rate your understanding of each concept from 1-5 (5 = expert level):
+
+**Chapter 1:**
+- Nav2 architecture and customization: ___/5
+- Humanoid-specific navigation: ___/5
+- Path planning algorithms: ___/5
+- Behavior trees: ___/5
+- System integration: ___/5
+
+**Chapter 2:**
+- Balance control theory: ___/5
+- ZMP and capture point: ___/5
+- Control algorithms: ___/5
+- Locomotion patterns: ___/5
+- Disturbance handling: ___/5
+
+**Chapter 3:**
+- Isaac Sim manipulation: ___/5
+- Grasp planning: ___/5
+- Force control: ___/5
+- Sensor integration: ___/5
+- Physics simulation: ___/5

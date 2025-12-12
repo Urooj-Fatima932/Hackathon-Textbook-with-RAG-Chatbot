@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400&display=swap');
+
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-font-family-base: 'Inter', system-ui, sans-serif;
+  --ifm-font-family-monospace: 'Fira Code', monospace;
+
+  --ifm-spacing-unit: 8px;
+  --spacing-x-small: 8px; /* 1x base unit */
+  --spacing-small: 16px;   /* 2x base unit */
+  --spacing-medium: 24px;  /* 3x base unit */
+  --spacing-large: 32px;   /* 4x base unit */
+  --spacing-x-large: 48px; /* 6x base unit */
+
+  --ifm-color-primary: #F28C28;
+  --ifm-color-primary-dark: #CC5500;
+  --ifm-color-primary-darker: #FF7518;
+  --ifm-color-primary-darkest: #CC5500;
+  --ifm-color-primary-light: #E3963E;
+  --ifm-color-primary-lighter: #FFAC1C;
+  --ifm-color-primary-lightest: #FFBF00;
+
+  --ifm-background-color: #F8F8F8;
+  --ifm-font-color-base: #333333;
+  
+  --custom-text-secondary: #4A5568;
+  --custom-borders-dividers: #E2E8F0;
+
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #F28C28;
+  --ifm-color-primary-dark: #CC5500;
+  --ifm-color-primary-darker: #FF7518;
+  --ifm-color-primary-darkest: #CC5500;
+  --ifm-color-primary-light: #E3963E;
+  --ifm-color-primary-lighter: #FFAC1C;
+  --ifm-color-primary-lightest: #FFBF00;
+
+  --ifm-background-color: #080808;
+  --ifm-font-color-base: #E0E0E0;
+
+  --custom-text-secondary: #A0AEC0;
+  --custom-borders-dividers: #2D3748;
+
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+.button--primary {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: var(--ifm-color-primary);
+  color: white;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.button--primary:hover {
+  background-color: var(--ifm-color-primary-dark);
+  box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+}
+
+.button--secondary {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--ifm-color-primary);
+  border: 1px solid var(--ifm-color-primary);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.button--secondary:hover {
+  background-color: var(--ifm-color-primary);
+  color: white;
+}
+
+.card--custom {
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid var(--custom-borders-dividers);
+  background-color: var(--ifm-background-color);
+  transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.card--custom:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}
+
+[data-theme='dark'] .card--custom {
+  background-color: var(--custom-surface);
+  border-color: var(--custom-borders-dividers);
+}
+
+/* Tablet and up */
+@media (min-width: 768px) {
+  .theme-doc-sidebar-container {
+    width: 280px;
+  }
+}
+
+/* Mobile only */
+@media (max-width: 767px) {
+  /* Add mobile-specific styles here */
+}
+
+.navbar {
+  min-height: 64px;
+  border-bottom: 1px solid var(--custom-borders-dividers);
+}
+
+@media (max-width: 996px) {
+  .navbar {
+    height: auto;
+    min-height: 64px;
+  }
+}
+
+/* Desktop only */
+@media (min-width: 997px) { /* equivalent to --ifm-breakpoint-lg + 1px */
+  .table-of-contents {
+    width: 240px;
+  }
+}
+
+/* Tablet and mobile */
+@media (max-width: 996px) { /* equivalent to --ifm-breakpoint-lg */
+  .table-of-contents {
+    display: none;
+  }
+}

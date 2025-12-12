@@ -1,0 +1,1942 @@
+---
+title: "Building a Human-Robot Interaction Interface in Unity"
+sidebar_position: 3
+---
+
+# Building a Human-Robot Interaction Interface in Unity
+
+## Learning Objectives
+
+By the end of this chapter, you should be able to:
+- Design intuitive user interfaces for robotics applications in Unity
+- Implement interactive controls for robot manipulation and navigation
+- Create visualization systems for robot state and sensor data
+- Develop gesture-based and voice interaction systems
+- Integrate AR/VR interfaces for immersive human-robot interaction
+- Build debugging and monitoring tools for robot operators
+
+## Introduction to Human-Robot Interaction
+
+Human-Robot Interaction (HRI) is a critical component of modern robotics systems, enabling humans to effectively command, monitor, and collaborate with robots. Unity's powerful UI system and input handling capabilities make it an excellent platform for developing sophisticated HRI interfaces that can range from simple command interfaces to complex immersive environments.
+
+This chapter explores the design and implementation of user interfaces that facilitate intuitive and effective human-robot interaction in Unity environments.
+
+## Unity UI Fundamentals for Robotics
+
+### UI Canvas Setup for Robotics Applications
+
+```csharp
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+
+public class RoboticsCanvasManager : MonoBehaviour
+{
+    [Header("Canvas Configuration")]
+    public RenderMode renderMode = RenderMode.ScreenSpaceOverlay;
+    public bool useCamera = false;
+    public Camera uiCamera;
+    public Vector2 resolution = new Vector2(1920, 1080);
+    
+    [Header("UI Layers")]
+    public LayerMask uiLayer = 1 << 5;  // UI layer
+    public bool overrideSorting = true;
+    public int sortingOrder = 10;
+    
+    [Header("Robot Controls UI")]
+    public bool showControlPanels = true;
+    public bool showStatusPanels = true;
+    public bool showDebugPanels = false;
+
+    private Canvas canvas;
+    private CanvasScaler scaler;
+    private GraphicRaycaster raycaster;
+
+    void Start()
+    {
+        SetupCanvas();
+        CreateRobotUIComponents();
+    }
+
+    void SetupCanvas()
+    {
+        canvas = GetComponent<Canvas>();
+        if (canvas == null)
+        {
+            canvas = gameObject.AddComponent<Canvas>();
+        }
+
+        scaler = GetComponent<CanvasScaler>();
+        if (scaler == null)
+        {
+            scaler = gameObject.AddComponent<CanvasScaler>();
+        }
+
+        raycaster = GetComponent<GraphicRaycaster>();
+        if (raycaster == null)
+        {
+            raycaster = gameObject.AddComponent<GraphicRaycaster>();
+        }
+
+        // Configure canvas properties
+        canvas.renderMode = renderMode;
+        if (useCamera && uiCamera != null)
+        {
+            canvas.worldCamera = uiCamera;
+        }
+
+        if (overrideSorting)
+        {
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = sortingOrder;
+        }
+
+        // Configure scaler for proper resolution handling
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = resolution;
+        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        scaler.matchWidthOrHeight = 0.5f; // Balanced match
+    }
+
+    void CreateRobotUIComponents()
+    {
+        if (showControlPanels)
+        {
+            CreateControlPanels();
+        }
+
+        if (showStatusPanels)
+        {
+            CreateStatusPanels();
+        }
+
+        if (showDebugPanels)
+        {
+            CreateDebugPanels();
+        }
+    }
+
+    void CreateControlPanels()
+    {
+        // Create main control panel
+        GameObject controlPanel = CreatePanel("RobotControlPanel", new Vector2(300, 400));
+        controlPanel.transform.SetParent(transform, false);
+
+        // Add control buttons
+        CreateControlButtons(controlPanel.transform);
+        CreateJoystickControls(controlPanel.transform);
+        CreateCommandInput(controlPanel.transform);
+    }
+
+    void CreateStatusPanels()
+    {
+        // Create status panel
+        GameObject statusPanel = CreatePanel("RobotStatusPanel", new Vector2(250, 300));
+        statusPanel.transform.SetParent(transform, false);
+        statusPanel.transform.position = new Vector3(Screen.width - 270, Screen.height - 320, 0);
+
+        // Add status displays
+        CreateStatusDisplays(statusPanel.transform);
+        CreateSensorVisualizations(statusPanel.transform);
+    }
+
+    void CreateDebugPanels()
+    {
+        // Create debug panel for developers
+        GameObject debugPanel = CreatePanel("RobotDebugPanel", new Vector2(300, 350));
+        debugPanel.transform.SetParent(transform, false);
+        debugPanel.transform.position = new Vector3(10, Screen.height - 360, 0);
+
+        // Add debug information
+        CreateDebugInfo(debugPanel.transform);
+    }
+
+    GameObject CreatePanel(string name, Vector2 size)
+    {
+        GameObject panel = new GameObject(name);
+        Image image = panel.AddComponent<Image>();
+        
+        // Apply default UI styling
+        image.color = new Color(0.1f, 0.1f, 0.1f, 0.8f); // Dark semi-transparent
+
+        RectTransform rectTransform = panel.GetComponent<RectTransform>();
+        rectTransform.sizeDelta = size;
+        rectTransform.anchorMin = Vector2.zero;
+        rectTransform.anchorMax = Vector2.zero;
+        rectTransform.pivot = Vector2.zero;
+
+        // Add rounded corners if available
+        AddRoundedCorners(image);
+
+        return panel;
+    }
+
+    void AddRoundedCorners(Image image)
+    {
+        // Apply basic rounded corner effect
+        // In a real implementation, you'd use a custom shader or sprite
+    }
+
+    void CreateControlButtons(Transform parent)
+    {
+        // Create basic control buttons (e.g., emergency stop, mode selection)
+        GameObject stopButton = CreateUIButton("EmergencyStop", parent);
+        Button stopBtn = stopButton.GetComponent<Button>();
+        if (stopBtn != null)
+        {
+            stopBtn.onClick.AddListener(OnEmergencyStop);
+            stopBtn.GetComponent<Image>().color = Color.red;
+        }
+
+        GameObject modeButton = CreateUIButton("Mode: Auto", parent);
+        Button modeBtn = modeButton.GetComponent<Button>();
+        if (modeBtn != null)
+        {
+            modeBtn.onClick.AddListener(OnModeToggle);
+        }
+    }
+
+    void CreateJoystickControls(Transform parent)
+    {
+        // Create virtual joystick for robot movement
+        GameObject joystickPanel = new GameObject("JoystickPanel");
+        joystickPanel.transform.SetParent(parent, false);
+        
+        RectTransform joyRect = joystickPanel.AddComponent<RectTransform>();
+        joyRect.sizeDelta = new Vector2(150, 150);
+        
+        // In a real implementation, you'd integrate with a joystick system
+        // such as Unity's Input System or a third-party solution
+    }
+
+    void CreateCommandInput(Transform parent)
+    {
+        // Create command input field
+        GameObject inputFieldObj = new GameObject("CommandInput");
+        inputFieldObj.transform.SetParent(parent, false);
+        
+        RectTransform inputRect = inputFieldObj.AddComponent<RectTransform>();
+        inputRect.sizeDelta = new Vector2(250, 30);
+        
+        InputField inputField = inputFieldObj.AddComponent<InputField>();
+        
+        // Create placeholder text
+        GameObject placeholderText = new GameObject("Placeholder");
+        placeholderText.transform.SetParent(inputFieldObj.transform, false);
+        Text placeholder = placeholderText.AddComponent<Text>();
+        placeholder.text = "Enter command...";
+        placeholder.fontSize = 14;
+        
+        // Create input text
+        GameObject inputText = new GameObject("InputText");
+        inputText.transform.SetParent(inputFieldObj.transform, false);
+        Text inputTextComponent = inputText.AddComponent<Text>();
+        inputTextComponent.fontSize = 14;
+        
+        inputField.placeholder = placeholder;
+        inputField.textComponent = inputTextComponent;
+        
+        inputField.onEndEdit.AddListener(OnCommandEntered);
+    }
+
+    GameObject CreateUIButton(string text, Transform parent)
+    {
+        GameObject buttonObj = new GameObject(text + "Button");
+        buttonObj.transform.SetParent(parent, false);
+
+        RectTransform rectTransform = buttonObj.AddComponent<RectTransform>();
+        rectTransform.sizeDelta = new Vector2(120, 30);
+
+        Button button = buttonObj.AddComponent<Button>();
+        Image buttonImage = buttonObj.AddComponent<Image>();
+        buttonImage.color = new Color(0.3f, 0.3f, 0.3f, 1.0f);
+
+        GameObject buttonText = new GameObject("ButtonText");
+        buttonText.transform.SetParent(buttonObj.transform, false);
+        
+        Text textComponent = buttonText.AddComponent<Text>();
+        textComponent.text = text;
+        textComponent.fontSize = 14;
+        textComponent.alignment = TextAnchor.MiddleCenter;
+        textComponent.color = Color.white;
+
+        RectTransform textRect = buttonText.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        return buttonObj;
+    }
+
+    void CreateStatusDisplays(Transform parent)
+    {
+        // Create status display elements
+        GameObject batteryBar = CreateProgressBar("Battery", parent);
+        GameObject cpuUsage = CreateProgressBar("CPU Usage", parent);
+        GameObject memoryUsage = CreateProgressBar("Memory", parent);
+        
+        // Position them vertically
+        float yPos = -30f;
+        batteryBar.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, yPos);
+        yPos -= 40f;
+        cpuUsage.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, yPos);
+        yPos -= 40f;
+        memoryUsage.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, yPos);
+    }
+
+    GameObject CreateProgressBar(string name, Transform parent)
+    {
+        GameObject progressBar = new GameObject(name + "Bar");
+        progressBar.transform.SetParent(parent, false);
+
+        RectTransform rectTransform = progressBar.AddComponent<RectTransform>();
+        rectTransform.sizeDelta = new Vector2(200, 15);
+
+        Image background = progressBar.AddComponent<Image>();
+        background.color = Color.grey;
+
+        GameObject fillArea = new GameObject("FillArea");
+        fillArea.transform.SetParent(progressBar.transform, false);
+
+        RectTransform fillAreaRect = fillArea.AddComponent<RectTransform>();
+        fillAreaRect.anchorMin = Vector2.zero;
+        fillAreaRect.anchorMax = Vector2.one;
+        fillAreaRect.sizeDelta = new Vector2(-10, 0);
+
+        GameObject fill = new GameObject("Fill");
+        fill.transform.SetParent(fillArea.transform, false);
+
+        RectTransform fillRect = fill.AddComponent<RectTransform>();
+        fillRect.anchorMin = Vector2.zero;
+        fillRect.anchorMax = Vector2.one;
+        fillRect.pivot = new Vector2(0, 0.5f);
+
+        Image fillImage = fill.AddComponent<Image>();
+        fillImage.color = Color.green;
+
+        // Create label
+        GameObject label = new GameObject(name + "Label");
+        label.transform.SetParent(progressBar.transform, false);
+        
+        Text labelText = label.AddComponent<Text>();
+        labelText.text = name + ": 100%";
+        labelText.fontSize = 12;
+        labelText.alignment = TextAnchor.MiddleLeft;
+
+        RectTransform labelRect = label.GetComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.zero;
+        labelRect.anchoredPosition = new Vector2(5, 0);
+
+        return progressBar;
+    }
+
+    void OnEmergencyStop()
+    {
+        Debug.Log("Emergency stop activated!");
+        // Implement emergency stop functionality
+    }
+
+    void OnModeToggle()
+    {
+        Debug.Log("Robot mode toggled!");
+        // Implement mode toggle functionality
+    }
+
+    void OnCommandEntered(string command)
+    {
+        Debug.Log("Command entered: " + command);
+        // Process the command
+    }
+
+    void CreateSensorVisualizations(Transform parent)
+    {
+        // Create visualization for sensor data
+        GameObject sensorPanel = new GameObject("SensorVisualizations");
+        sensorPanel.transform.SetParent(parent, false);
+
+        // Add sensor-specific visualizations
+        CreateLaserScanVisualization(sensorPanel.transform);
+        CreateCameraFeedVisualization(sensorPanel.transform);
+        CreateIMUVisualization(sensorPanel.transform);
+    }
+
+    void CreateLaserScanVisualization(Transform parent)
+    {
+        GameObject laserPanel = new GameObject("LaserScan");
+        laserPanel.transform.SetParent(parent, false);
+        
+        RectTransform rect = laserPanel.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(100, 100);
+        
+        // Add a basic image to represent the visualization
+        Image image = laserPanel.AddComponent<Image>();
+        image.color = Color.blue;
+    }
+
+    void CreateCameraFeedVisualization(Transform parent)
+    {
+        GameObject cameraPanel = new GameObject("CameraFeed");
+        cameraPanel.transform.SetParent(parent, false);
+        
+        RectTransform rect = cameraPanel.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(150, 100);
+        
+        RawImage rawImage = cameraPanel.AddComponent<RawImage>();
+        // This would be updated with actual camera data
+    }
+
+    void CreateIMUVisualization(Transform parent)
+    {
+        GameObject imuPanel = new GameObject("IMU");
+        imuPanel.transform.SetParent(parent, false);
+        
+        RectTransform rect = imuPanel.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(80, 80);
+        
+        Image image = imuPanel.AddComponent<Image>();
+        image.color = Color.cyan;
+    }
+
+    void CreateDebugInfo(Transform parent)
+    {
+        GameObject debugText = new GameObject("DebugInfo");
+        debugText.transform.SetParent(parent, false);
+        
+        Text text = debugText.AddComponent<Text>();
+        text.fontSize = 12;
+        text.alignment = TextAnchor.UpperLeft;
+        text.text = "Debug Info:\nRobot Status: Active\nConnected: True\nFPS: 60";
+        
+        RectTransform rect = debugText.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = new Vector2(10, -200);
+        rect.offsetMax = new Vector2(-10, -10);
+    }
+}
+```
+
+### Input System for Robotics Interface
+
+```csharp
+using UnityEngine;
+using UnityEngine.InputSystem;
+using System;
+
+public class RoboticsInputManager : MonoBehaviour
+{
+    [Header("Input Configuration")]
+    public InputActionAsset inputActions;
+    public InputActionMap robotControls;
+    
+    [Header("Movement Controls")]
+    public float moveSpeed = 1.0f;
+    public float turnSpeed = 1.0f;
+    public float armSpeed = 1.0f;
+    
+    [Header("Interaction Settings")]
+    public LayerMask robotLayer = 1 << 8;  // Robot layer
+    public float interactionDistance = 3f;
+    public bool enableVoiceCommands = false;
+
+    private InputAction moveAction;
+    private InputAction turnAction;
+    private InputAction armControlAction;
+    private InputAction gripAction;
+    private InputAction interactAction;
+    private InputAction commandAction;
+
+    [System.Serializable]
+    public class RobotInteractionEvent : UnityEngine.Events.UnityEvent<Vector3, string> { }
+
+    public RobotInteractionEvent OnRobotCommand = new RobotInteractionEvent();
+
+    void Start()
+    {
+        SetupInputActions();
+        SubscribeToInputs();
+    }
+
+    void SetupInputActions()
+    {
+        if (inputActions != null)
+        {
+            robotControls = inputActions.FindActionMap("RobotControls");
+            if (robotControls != null)
+            {
+                robotControls.Enable();
+                
+                moveAction = robotControls.FindAction("Move");
+                turnAction = robotControls.FindAction("Turn");
+                armControlAction = robotControls.FindAction("ArmControl");
+                gripAction = robotControls.FindAction("Grip");
+                interactAction = robotControls.FindAction("Interact");
+                commandAction = robotControls.FindAction("Command");
+            }
+        }
+        else
+        {
+            // Fallback: create default actions
+            CreateFallbackActions();
+        }
+    }
+
+    void CreateFallbackActions()
+    {
+        // Create input actions programmatically as fallback
+        InputActionAsset asset = ScriptableObject.CreateInstance<InputActionAsset>();
+        InputActionMap map = asset.AddActionMap("RobotControls");
+        
+        moveAction = map.AddAction("Move", InputActionType.Value, "<Gamepad>/leftStick");
+        turnAction = map.AddAction("Turn", InputActionType.Value, "<Gamepad>/rightStick/x");
+        armControlAction = map.AddAction("ArmControl", InputActionType.Value, "<Gamepad>/rightTrigger");
+        gripAction = map.AddAction("Grip", InputActionType.Button, "<Gamepad>/A");
+        interactAction = map.AddAction("Interact", InputActionType.Button, "<Mouse>/leftButton");
+        commandAction = map.AddAction("Command", InputActionType.Button, "<Keyboard>/space");
+        
+        asset.Enable();
+    }
+
+    void SubscribeToInputs()
+    {
+        if (moveAction != null) moveAction.performed += OnMove;
+        if (turnAction != null) turnAction.performed += OnTurn;
+        if (armControlAction != null) armControlAction.performed += OnArmControl;
+        if (gripAction != null) gripAction.performed += OnGrip;
+        if (interactAction != null) interactAction.performed += OnInteract;
+        if (commandAction != null) commandAction.performed += OnCommand;
+    }
+
+    void OnMove(InputAction.CallbackContext context)
+    {
+        Vector2 movement = context.ReadValue<Vector2>();
+        Vector3 moveDirection = new Vector3(movement.x, 0, movement.y);
+        
+        // Send movement command to robot
+        SendRobotCommand("MOVE", moveDirection * moveSpeed);
+    }
+
+    void OnTurn(InputAction.CallbackContext context)
+    {
+        float turnValue = context.ReadValue<float>();
+        
+        // Send turn command to robot
+        SendRobotCommand("TURN", Vector3.up * turnValue * turnSpeed);
+    }
+
+    void OnArmControl(InputAction.CallbackContext context)
+    {
+        float armValue = context.ReadValue<float>();
+        
+        // Control robot arm
+        SendRobotCommand("ARM_CONTROL", Vector3.forward * armValue * armSpeed);
+    }
+
+    void OnGrip(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            // Toggle gripper
+            SendRobotCommand("GRIP_TOGGLE", Vector3.zero);
+        }
+    }
+
+    void OnInteract(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            // Raycast to find interactable object
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+            
+            if (Physics.Raycast(ray, out hit, interactionDistance, robotLayer))
+            {
+                // Call interaction method on robot
+                if (hit.collider.GetComponent<RobotController>() != null)
+                {
+                    hit.collider.GetComponent<RobotController>().OnInteract();
+                }
+            }
+        }
+    }
+
+    void OnCommand(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            // Open command interface
+            OpenCommandInterface();
+        }
+    }
+
+    void SendRobotCommand(string command, Vector3 parameter)
+    {
+        // Send command to robot through ROS/TCP or other interface
+        Debug.Log($"Sending command: {command} with parameter: {parameter}");
+        
+        // Trigger event for other systems to handle
+        OnRobotCommand.Invoke(parameter, command);
+    }
+
+    void OpenCommandInterface()
+    {
+        // Show command input interface
+        Debug.Log("Opening command interface...");
+    }
+
+    void OnDestroy()
+    {
+        // Unsubscribe from input actions
+        if (moveAction != null) moveAction.performed -= OnMove;
+        if (turnAction != null) turnAction.performed -= OnTurn;
+        if (armControlAction != null) armControlAction.performed -= OnArmControl;
+        if (gripAction != null) gripAction.performed -= OnGrip;
+        if (interactAction != null) interactAction.performed -= OnInteract;
+        if (commandAction != null) commandAction.performed -= OnCommand;
+    }
+
+    // Method to update robot control from UI
+    public void SetRobotVelocity(Vector3 linear, Vector3 angular)
+    {
+        SendRobotCommand("SET_VELOCITY", linear);
+        SendRobotCommand("SET_ANGULAR_VELOCITY", angular);
+    }
+
+    // Method to send specific commands
+    public void SendSimpleCommand(string command)
+    {
+        SendRobotCommand(command, Vector3.zero);
+    }
+
+    // Voice command interface
+    public void ProcessVoiceCommand(string command)
+    {
+        if (enableVoiceCommands)
+        {
+            // Process and send voice command
+            SendRobotCommand("VOICE_COMMAND", Vector3.zero);
+        }
+    }
+
+    // UI-based command interface
+    public void SendUICommand(string command, string parameters = "")
+    {
+        SendRobotCommand(command, Vector3.zero);
+    }
+}
+```
+
+## Advanced Interface Systems
+
+### Gesture-Based Interaction
+
+```csharp
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections.Generic;
+
+public class GestureInteractionSystem : MonoBehaviour
+{
+    [Header("Gesture Recognition")]
+    public bool enableGestureRecognition = true;
+    public float gestureTolerance = 0.1f;
+    public float gestureSpeedThreshold = 0.1f;
+    public KeyCode gestureKey = KeyCode.Mouse0;
+
+    [Header("Gesture Settings")]
+    public float minGestureLength = 0.2f;
+    public float maxGestureTime = 2.0f;
+    public float gestureSmoothing = 0.1f;
+
+    [Header("UI Feedback")]
+    public GameObject gestureTrail;
+    public Color gestureColor = Color.white;
+    public float trailWidth = 2.0f;
+
+    private List<Vector2> gesturePoints = new List<Vector2>();
+    private float gestureStartTime;
+    private bool isTrackingGesture = false;
+    private LineRenderer trailRenderer;
+
+    [System.Serializable]
+    public class RecognizedGesture
+    {
+        public string name;
+        public List<Vector2> points;  // Normalized points
+        public string robotCommand;
+    }
+
+    [Header("Predefined Gestures")]
+    public List<RecognizedGesture> predefinedGestures = new List<RecognizedGesture>();
+
+    void Start()
+    {
+        SetupGestureTrail();
+        InitializePredefinedGestures();
+    }
+
+    void SetupGestureTrail()
+    {
+        if (gestureTrail == null)
+        {
+            gestureTrail = new GameObject("GestureTrail");
+            trailRenderer = gestureTrail.AddComponent<LineRenderer>();
+        }
+        else
+        {
+            trailRenderer = gestureTrail.GetComponent<LineRenderer>();
+        }
+
+        if (trailRenderer != null)
+        {
+            trailRenderer.positionCount = 0;
+            trailRenderer.startWidth = trailWidth;
+            trailRenderer.endWidth = trailWidth;
+            trailRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            trailRenderer.material.color = gestureColor;
+            trailRenderer.enabled = false;
+        }
+    }
+
+    void InitializePredefinedGestures()
+    {
+        // Add basic gestures for robot control
+        if (predefinedGestures.Count == 0)
+        {
+            // Forward gesture
+            predefinedGestures.Add(new RecognizedGesture
+            {
+                name = "FORWARD",
+                points = new List<Vector2> { new Vector2(0, 0), new Vector2(0, 1) },
+                robotCommand = "MOVE_FORWARD"
+            });
+
+            // Backward gesture  
+            predefinedGestures.Add(new RecognizedGesture
+            {
+                name = "BACKWARD",
+                points = new List<Vector2> { new Vector2(0, 1), new Vector2(0, 0) },
+                robotCommand = "MOVE_BACKWARD"
+            });
+
+            // Left gesture
+            predefinedGestures.Add(new RecognizedGesture
+            {
+                name = "LEFT",
+                points = new List<Vector2> { new Vector2(1, 0), new Vector2(0, 0) },
+                robotCommand = "TURN_LEFT"
+            });
+
+            // Right gesture
+            predefinedGestures.Add(new RecognizedGesture
+            {
+                name = "RIGHT",
+                points = new List<Vector2> { new Vector2(-1, 0), new Vector2(0, 0) },
+                robotCommand = "TURN_RIGHT"
+            });
+
+            // Stop gesture (circle)
+            predefinedGestures.Add(new RecognizedGesture
+            {
+                name = "STOP",
+                points = new List<Vector2> { 
+                    new Vector2(0, 0), new Vector2(0.5f, 0), 
+                    new Vector2(0.5f, 0.5f), new Vector2(0, 0.5f), 
+                    new Vector2(0, 0) 
+                },
+                robotCommand = "STOP"
+            });
+        }
+    }
+
+    void Update()
+    {
+        HandleGestureInput();
+    }
+
+    void HandleGestureInput()
+    {
+        if (!enableGestureRecognition) return;
+
+        if (Input.GetKeyDown(gestureKey))
+        {
+            StartGesture();
+        }
+        else if (Input.GetKey(gestureKey))
+        {
+            TrackGesture();
+        }
+        else if (Input.GetKeyUp(gestureKey))
+        {
+            EndGesture();
+        }
+    }
+
+    void StartGesture()
+    {
+        gesturePoints.Clear();
+        gestureStartTime = Time.time;
+        isTrackingGesture = true;
+
+        if (trailRenderer != null)
+        {
+            trailRenderer.enabled = true;
+            trailRenderer.positionCount = 0;
+        }
+    }
+
+    void TrackGesture()
+    {
+        if (!isTrackingGesture) return;
+
+        Vector2 currentPoint = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+        
+        // Add point if it's far enough from the last one
+        if (gesturePoints.Count == 0 || 
+            Vector2.Distance(currentPoint, gesturePoints[gesturePoints.Count - 1]) > gestureTolerance)
+        {
+            gesturePoints.Add(currentPoint);
+
+            if (trailRenderer != null && gesturePoints.Count >= 2)
+            {
+                // Update trail renderer
+                trailRenderer.positionCount = gesturePoints.Count;
+                for (int i = 0; i < gesturePoints.Count; i++)
+                {
+                    Vector3 worldPos = Camera.main.ScreenToWorldPoint(
+                        new Vector3(gesturePoints[i].x, gesturePoints[i].y, 10.0f)
+                    );
+                    trailRenderer.SetPosition(i, worldPos);
+                }
+            }
+        }
+    }
+
+    void EndGesture()
+    {
+        if (!isTrackingGesture) return;
+
+        isTrackingGesture = false;
+
+        if (trailRenderer != null)
+        {
+            trailRenderer.enabled = false;
+        }
+
+        if (gesturePoints.Count >= 2 && 
+            Time.time - gestureStartTime <= maxGestureTime &&
+            GetGestureLength() >= minGestureLength)
+        {
+            RecognizeGesture();
+        }
+
+        gesturePoints.Clear();
+    }
+
+    float GetGestureLength()
+    {
+        float length = 0f;
+        for (int i = 1; i < gesturePoints.Count; i++)
+        {
+            length += Vector2.Distance(gesturePoints[i-1], gesturePoints[i]);
+        }
+        return length;
+    }
+
+    void RecognizeGesture()
+    {
+        string recognizedGesture = CompareToPredefinedGestures();
+        
+        if (!string.IsNullOrEmpty(recognizedGesture))
+        {
+            Debug.Log($"Gesture recognized: {recognizedGesture}");
+            ExecuteGestureCommand(recognizedGesture);
+        }
+        else
+        {
+            Debug.Log("Gesture not recognized");
+        }
+    }
+
+    string CompareToPredefinedGestures()
+    {
+        // Normalize the current gesture
+        List<Vector2> normalizedCurrent = NormalizeGesture(gesturePoints);
+
+        float bestMatchScore = float.MaxValue;
+        string bestMatchGesture = "";
+
+        foreach (RecognizedGesture predefined in predefinedGestures)
+        {
+            // Normalize the predefined gesture
+            List<Vector2> normalizedPredefined = NormalizeGesture(predefined.points);
+
+            // Calculate similarity (simplified approach)
+            float similarity = CalculateGestureSimilarity(normalizedCurrent, normalizedPredefined);
+
+            if (similarity < bestMatchScore)
+            {
+                bestMatchScore = similarity;
+                bestMatchGesture = predefined.name;
+            }
+        }
+
+        // Return the gesture if similarity is below threshold
+        return bestMatchScore < gestureTolerance ? bestMatchGesture : "";
+    }
+
+    List<Vector2> NormalizeGesture(List<Vector2> points)
+    {
+        if (points.Count <= 1) return points;
+
+        // Find bounding box
+        Vector2 min = points[0];
+        Vector2 max = points[0];
+
+        foreach (Vector2 point in points)
+        {
+            min = new Vector2(Mathf.Min(min.x, point.x), Mathf.Min(min.y, point.y));
+            max = new Vector2(Mathf.Max(max.x, point.x), Mathf.Max(max.y, point.y));
+        }
+
+        Vector2 size = max - min;
+        float maxSize = Mathf.Max(size.x, size.y);
+
+        // Normalize to 0-1 range
+        List<Vector2> normalized = new List<Vector2>();
+
+        foreach (Vector2 point in points)
+        {
+            Vector2 normalizedPoint = (point - min) / maxSize;
+            normalized.Add(normalizedPoint);
+        }
+
+        return normalized;
+    }
+
+    float CalculateGestureSimilarity(List<Vector2> gesture1, List<Vector2> gesture2)
+    {
+        // Simple point-to-point distance comparison
+        // This is a simplified approach - a full implementation would use more sophisticated algorithms
+        int maxPoints = Mathf.Min(gesture1.Count, gesture2.Count);
+        if (maxPoints == 0) return float.MaxValue;
+
+        float totalDistance = 0f;
+
+        for (int i = 0; i < maxPoints; i++)
+        {
+            float pointDistance = Vector2.Distance(gesture1[i], gesture2[i]);
+            totalDistance += pointDistance;
+        }
+
+        return totalDistance / maxPoints;
+    }
+
+    void ExecuteGestureCommand(string gestureName)
+    {
+        // Find the corresponding robot command
+        foreach (RecognizedGesture gesture in predefinedGestures)
+        {
+            if (gesture.name == gestureName)
+            {
+                // Send the command to the robot
+                SendRobotCommand(gesture.robotCommand);
+                break;
+            }
+        }
+    }
+
+    void SendRobotCommand(string command)
+    {
+        // This would send the command to the robot through ROS or other interface
+        Debug.Log($"Sending robot command: {command}");
+        
+        // Trigger any UI updates or feedback
+        ProvideGestureFeedback(gestureName);
+    }
+
+    void ProvideGestureFeedback(string gestureName)
+    {
+        // Provide visual feedback for the recognized gesture
+        Debug.Log($"Gesture '{gestureName}' executed successfully");
+        // Could trigger animations, sounds, or visual indicators
+    }
+
+    // Method to add custom gestures at runtime
+    public void AddCustomGesture(string name, List<Vector2> points, string command)
+    {
+        RecognizedGesture newGesture = new RecognizedGesture
+        {
+            name = name,
+            points = new List<Vector2>(points),
+            robotCommand = command
+        };
+
+        predefinedGestures.Add(newGesture);
+    }
+
+    // Method to get all recognized gestures
+    public List<string> GetAvailableGestures()
+    {
+        List<string> gestures = new List<string>();
+        foreach (RecognizedGesture gesture in predefinedGestures)
+        {
+            gestures.Add(gesture.name + " -> " + gesture.robotCommand);
+        }
+        return gestures;
+    }
+}
+```
+
+### Voice Command Interface
+
+```csharp
+using UnityEngine;
+using UnityEngine.Events;
+using System.Collections.Generic;
+
+public class VoiceCommandInterface : MonoBehaviour
+{
+    [Header("Voice Recognition")]
+    public bool enableVoiceRecognition = true;
+    public float confidenceThreshold = 0.7f;
+    public KeyCode toggleKey = KeyCode.Space;
+
+    [Header("Command Recognition")]
+    public bool useKeywordRecognition = true;
+    public bool useGrammarBasedRecognition = false;
+
+    [Header("Feedback Settings")]
+    public bool showVoiceUI = true;
+    public bool playAudioFeedback = true;
+    public float commandTimeout = 5.0f;
+
+    [System.Serializable]
+    public class VoiceCommand
+    {
+        public string[] phrases;
+        public string command;
+        public UnityEvent onRecognized;
+    }
+
+    [Header("Available Commands")]
+    public List<VoiceCommand> voiceCommands = new List<VoiceCommand>();
+
+    private bool isListening = false;
+    private float listenStartTime;
+    private string lastRecognizedText = "";
+
+    [System.Serializable]
+    public class VoiceCommandEvent : UnityEvent<string, float> { }
+
+    public VoiceCommandEvent OnVoiceCommand = new VoiceCommandEvent();
+
+    void Start()
+    {
+        InitializeVoiceCommands();
+        if (enableVoiceRecognition)
+        {
+            StartVoiceRecognition();
+        }
+    }
+
+    void InitializeVoiceCommands()
+    {
+        if (voiceCommands.Count == 0)
+        {
+            // Add default voice commands for robot control
+            voiceCommands.Add(new VoiceCommand
+            {
+                phrases = new string[] { "move forward", "go forward", "forward" },
+                command = "MOVE_FORWARD",
+                onRecognized = new UnityEvent()
+            });
+
+            voiceCommands.Add(new VoiceCommand
+            {
+                phrases = new string[] { "move backward", "go backward", "backward" },
+                command = "MOVE_BACKWARD",
+                onRecognized = new UnityEvent()
+            });
+
+            voiceCommands.Add(new VoiceCommand
+            {
+                phrases = new string[] { "turn left", "left", "rotate left" },
+                command = "TURN_LEFT",
+                onRecognized = new UnityEvent()
+            });
+
+            voiceCommands.Add(new VoiceCommand
+            {
+                phrases = new string[] { "turn right", "right", "rotate right" },
+                command = "TURN_RIGHT",
+                onRecognized = new UnityEvent()
+            });
+
+            voiceCommands.Add(new VoiceCommand
+            {
+                phrases = new string[] { "stop", "halt", "cease", "freeze" },
+                command = "STOP",
+                onRecognized = new UnityEvent()
+            });
+
+            voiceCommands.Add(new VoiceCommand
+            {
+                phrases = new string[] { "come here", "come to me", "approach" },
+                command = "COME_HERE",
+                onRecognized = new UnityEvent()
+            });
+
+            voiceCommands.Add(new VoiceCommand
+            {
+                phrases = new string[] { "arm up", "raise arm", "lift arm" },
+                command = "RAISE_ARM",
+                onRecognized = new UnityEvent()
+            });
+
+            voiceCommands.Add(new VoiceCommand
+            {
+                phrases = new string[] { "arm down", "lower arm", "drop arm" },
+                command = "LOWER_ARM",
+                onRecognized = new UnityEvent()
+            });
+        }
+    }
+
+    void Update()
+    {
+        HandleVoiceInput();
+        CheckTimeout();
+    }
+
+    void HandleVoiceInput()
+    {
+        if (Input.GetKeyDown(toggleKey))
+        {
+            ToggleListening();
+        }
+    }
+
+    void ToggleListening()
+    {
+        isListening = !isListening;
+        listenStartTime = Time.time;
+
+        if (isListening)
+        {
+            StartListening();
+        }
+        else
+        {
+            StopListening();
+        }
+    }
+
+    void StartListening()
+    {
+        if (!enableVoiceRecognition) return;
+        
+        Debug.Log("Listening for voice commands...");
+        
+        // In a real implementation, you would use a voice recognition system
+        // such as Unity's built-in speech recognition or a third-party service
+        OnVoiceListeningStarted();
+    }
+
+    void StopListening()
+    {
+        Debug.Log("Voice listening stopped.");
+        OnVoiceListeningStopped();
+    }
+
+    void CheckTimeout()
+    {
+        if (isListening && Time.time - listenStartTime > commandTimeout)
+        {
+            StopListening();
+        }
+    }
+
+    // Simulated voice recognition (in real implementation, this would come from actual voice recognition system)
+    public void SimulateVoiceInput(string text)
+    {
+        if (enableVoiceRecognition && isListening)
+        {
+            ProcessVoiceInput(text, 0.9f); // Simulated high confidence
+        }
+    }
+
+    void ProcessVoiceInput(string text, float confidence)
+    {
+        if (confidence < confidenceThreshold)
+        {
+            Debug.Log($"Voice command below confidence threshold: {text} (confidence: {confidence})");
+            return;
+        }
+
+        lastRecognizedText = text;
+        Debug.Log($"Recognized voice: '{text}' with confidence {confidence}");
+
+        // Try to match recognized text to commands
+        string matchedCommand = MatchVoiceCommand(text);
+
+        if (!string.IsNullOrEmpty(matchedCommand))
+        {
+            Debug.Log($"Executing voice command: {matchedCommand}");
+            
+            // Execute the matched command
+            ExecuteVoiceCommand(matchedCommand);
+            
+            // Trigger event
+            OnVoiceCommand.Invoke(matchedCommand, confidence);
+        }
+        else
+        {
+            Debug.Log($"No matching command found for: {text}");
+        }
+
+        // Stop listening after successful recognition (optional)
+        StopListening();
+    }
+
+    string MatchVoiceCommand(string recognizedText)
+    {
+        string lowerText = recognizedText.ToLower();
+
+        foreach (VoiceCommand cmd in voiceCommands)
+        {
+            foreach (string phrase in cmd.phrases)
+            {
+                if (lowerText.Contains(phrase.ToLower()))
+                {
+                    return cmd.command;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    void ExecuteVoiceCommand(string command)
+    {
+        Debug.Log($"Executing voice command: {command}");
+
+        // Find and execute the specific command
+        foreach (VoiceCommand cmd in voiceCommands)
+        {
+            if (cmd.command == command)
+            {
+                cmd.onRecognized?.Invoke();
+                break;
+            }
+        }
+
+        // Send command to robot
+        SendRobotCommand(command);
+
+        // Provide feedback
+        ProvideVoiceFeedback(command);
+    }
+
+    void SendRobotCommand(string command)
+    {
+        // In real implementation, send command to robot via ROS or other interface
+        Debug.Log($"Sending robot command: {command}");
+    }
+
+    void ProvideVoiceFeedback(string command)
+    {
+        if (playAudioFeedback)
+        {
+            // Play audio confirmation
+            // AudioSource could play a sound clip confirming the command was recognized
+        }
+
+        if (showVoiceUI)
+        {
+            // Update UI to show recognized command
+            Debug.Log($"Voice feedback: Executing {command}");
+        }
+    }
+
+    void OnVoiceListeningStarted()
+    {
+        // Update UI to show listening state
+        Debug.Log("Voice interface ready for commands");
+    }
+
+    void OnVoiceListeningStopped()
+    {
+        // Update UI to show not listening
+        Debug.Log("Voice interface stopped listening");
+    }
+
+    // Method to add voice command at runtime
+    public void AddVoiceCommand(string[] phrases, string command, UnityAction callback = null)
+    {
+        VoiceCommand newCmd = new VoiceCommand
+        {
+            phrases = phrases,
+            command = command,
+            onRecognized = new UnityEvent()
+        };
+
+        if (callback != null)
+        {
+            newCmd.onRecognized.AddListener(callback);
+        }
+
+        voiceCommands.Add(newCmd);
+    }
+
+    // Method to get available commands
+    public List<string> GetAvailableCommands()
+    {
+        List<string> commands = new List<string>();
+        foreach (VoiceCommand cmd in voiceCommands)
+        {
+            commands.Add(cmd.command + ": " + string.Join(", ", cmd.phrases));
+        }
+        return commands;
+    }
+
+    // Method to get last recognized text
+    public string GetLastRecognizedText()
+    {
+        return lastRecognizedText;
+    }
+
+    // Toggle voice recognition on/off
+    public void SetVoiceRecognitionEnabled(bool enabled)
+    {
+        enableVoiceRecognition = enabled;
+        if (!enabled && isListening)
+        {
+            StopListening();
+        }
+    }
+}
+```
+
+## AR/VR Integration for Immersive HRI
+
+### AR Interface Components
+
+```csharp
+using UnityEngine;
+using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
+using System.Collections.Generic;
+
+public class ARRobotInterface : MonoBehaviour
+{
+    [Header("AR Session")]
+    public ARSession arSession;
+    public ARCameraManager arCameraManager;
+    public ARPlaneManager arPlaneManager;
+
+    [Header("Robot AR Interface")]
+    public GameObject robotPrefab;
+    public float robotScale = 1.0f;
+    public bool autoPlaceRobot = true;
+
+    [Header("Interaction Settings")]
+    public LayerMask placementLayer = 1 << 0; // Default layer
+    public float placementDistance = 2.0f;
+    public bool enableObjectTracking = true;
+
+    [Header("UI Elements")]
+    public GameObject controlPanelPrefab;
+    public GameObject statusPanelPrefab;
+    public float uiScale = 1.0f;
+
+    private GameObject spawnedRobot;
+    private List<GameObject> arUIPanels = new List<GameObject>();
+    private bool isPlacingRobot = false;
+
+    [System.Serializable]
+    public class ARInteractionEvent : UnityEngine.Events.UnityEvent<GameObject, Vector3> { }
+
+    public ARInteractionEvent OnRobotPlaced = new ARInteractionEvent();
+    public ARInteractionEvent OnRobotInteracted = new ARInteractionEvent();
+
+    void Start()
+    {
+        InitializeARSession();
+        SetupARComponents();
+    }
+
+    void InitializeARSession()
+    {
+        if (arSession == null)
+        {
+            arSession = FindObjectOfType<ARSession>();
+        }
+
+        if (arCameraManager == null)
+        {
+            arCameraManager = FindObjectOfType<ARCameraManager>();
+        }
+
+        if (arPlaneManager == null)
+        {
+            arPlaneManager = FindObjectOfType<ARPlaneManager>();
+        }
+
+        if (arPlaneManager != null)
+        {
+            arPlaneManager.planesChanged += OnPlanesChanged;
+        }
+    }
+
+    void SetupARComponents()
+    {
+        if (arSession != null)
+        {
+            arSession.enabled = true;
+        }
+    }
+
+    void OnPlanesChanged(ARPlanesChangedEventArgs eventArgs)
+    {
+        // Handle plane detection for robot placement
+        foreach (ARPlane plane in eventArgs.added)
+        {
+            Debug.Log($"Plane detected: {plane.center}");
+        }
+    }
+
+    void Update()
+    {
+        HandleARInput();
+        UpdateARUI();
+    }
+
+    void HandleARInput()
+    {
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+
+            if (touch.phase == TouchPhase.Began)
+            {
+                if (isPlacingRobot)
+                {
+                    PlaceRobotAtTouch(touch.position);
+                }
+                else
+                {
+                    InteractWithRobot(touch.position);
+                }
+            }
+        }
+        else if (Input.GetMouseButtonDown(0))
+        {
+            if (isPlacingRobot)
+            {
+                PlaceRobotAtTouch(Input.mousePosition);
+            }
+            else
+            {
+                InteractWithRobot(Input.mousePosition);
+            }
+        }
+    }
+
+    void PlaceRobotAtTouch(Vector2 screenPosition)
+    {
+        if (arCameraManager == null) return;
+
+        Ray ray = arCameraManager.transform.GetComponent<Camera>().ScreenPointToRay(screenPosition);
+        
+        // Try to place on detected plane
+        if (TryPlaceRobotOnPlane(screenPosition))
+        {
+            isPlacingRobot = false;
+            return;
+        }
+
+        // Fallback: place at fixed distance
+        Vector3 placementPosition = ray.origin + ray.direction * placementDistance;
+        PlaceRobotAtPosition(placementPosition);
+    }
+
+    bool TryPlaceRobotOnPlane(Vector2 screenPosition)
+    {
+        if (arPlaneManager == null) return false;
+
+        foreach (var plane in arPlaneManager.trackables)
+        {
+            if (plane.alignment == PlaneAlignment.HorizontalUp)
+            {
+                // Check if the touch position is over this plane
+                Pose planePose = plane.pose;
+                
+                // Simple raycast to plane
+                Ray ray = Camera.main.ScreenPointToRay(screenPosition);
+                float distance;
+                
+                Plane geometryPlane = new Plane(planePose.up, planePose.position);
+                if (geometryPlane.Raycast(ray, out distance))
+                {
+                    Vector3 hitPoint = ray.GetPoint(distance);
+                    
+                    // Check if point is within plane bounds
+                    float planeHalfWidth = plane.extents.x * 0.5f;
+                    float planeHalfHeight = plane.extents.z * 0.5f;
+                    
+                    Vector3 localPoint = Quaternion.Inverse(planePose.rotation) * (hitPoint - planePose.position);
+                    
+                    if (Mathf.Abs(localPoint.x) <= planeHalfWidth && 
+                        Mathf.Abs(localPoint.z) <= planeHalfHeight)
+                    {
+                        PlaceRobotAtPosition(hitPoint);
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    void PlaceRobotAtPosition(Vector3 position)
+    {
+        if (spawnedRobot != null)
+        {
+            Destroy(spawnedRobot);
+        }
+
+        // Instantiate robot
+        spawnedRobot = Instantiate(robotPrefab, position, Quaternion.identity);
+        spawnedRobot.transform.localScale *= robotScale;
+
+        // Adjust rotation to match surface normal (if available)
+        spawnedRobot.transform.up = Vector3.up; // Assuming we want robot upright
+
+        // Create UI panels associated with robot
+        CreateARUIForRobot(spawnedRobot);
+
+        // Trigger event
+        OnRobotPlaced.Invoke(spawnedRobot, position);
+    }
+
+    void CreateARUIForRobot(GameObject robot)
+    {
+        // Create control panel
+        if (controlPanelPrefab != null)
+        {
+            GameObject controlPanel = Instantiate(controlPanelPrefab, robot.transform);
+            controlPanel.transform.localPosition = new Vector3(0, 2.0f, 0); // Above robot
+            controlPanel.transform.localScale = Vector3.one * uiScale;
+            arUIPanels.Add(controlPanel);
+        }
+
+        // Create status panel
+        if (statusPanelPrefab != null)
+        {
+            GameObject statusPanel = Instantiate(statusPanelPrefab, robot.transform);
+            statusPanel.transform.localPosition = new Vector3(0, 1.5f, 0); // Below control panel
+            statusPanel.transform.localScale = Vector3.one * uiScale;
+            arUIPanels.Add(statusPanel);
+        }
+    }
+
+    void InteractWithRobot(Vector2 screenPosition)
+    {
+        if (spawnedRobot == null) return;
+
+        // Raycast to check if we're touching the robot
+        Ray ray = Camera.main.ScreenPointToRay(screenPosition);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, 100f, placementLayer))
+        {
+            if (hit.collider.gameObject == spawnedRobot || 
+                hit.collider.transform.IsChildOf(spawnedRobot.transform))
+            {
+                OnRobotInteracted.Invoke(spawnedRobot, hit.point);
+                
+                // Trigger interaction - could open control interface, etc.
+                HandleRobotInteraction(spawnedRobot, hit.point);
+            }
+        }
+    }
+
+    void HandleRobotInteraction(GameObject robot, Vector3 hitPoint)
+    {
+        // Handle the interaction - could be opening control interface, 
+        // sending command to robot, etc.
+        Debug.Log($"Interacted with robot at {hitPoint}");
+    }
+
+    void UpdateARUI()
+    {
+        // Update UI panels to face the camera
+        foreach (GameObject panel in arUIPanels)
+        {
+            if (panel != null && Camera.main != null)
+            {
+                // Make UI face the camera
+                panel.transform.forward = Camera.main.transform.forward;
+            }
+        }
+    }
+
+    // Public methods for external control
+    public void StartRobotPlacement()
+    {
+        isPlacingRobot = true;
+        Debug.Log("AR Robot placement mode activated. Touch to place robot.");
+    }
+
+    public void StopRobotPlacement()
+    {
+        isPlacingRobot = false;
+        Debug.Log("AR Robot placement mode deactivated.");
+    }
+
+    public void RemoveSpawnedRobot()
+    {
+        if (spawnedRobot != null)
+        {
+            Destroy(spawnedRobot);
+            spawnedRobot = null;
+        }
+
+        // Clean up UI panels
+        foreach (GameObject panel in arUIPanels)
+        {
+            if (panel != null)
+            {
+                Destroy(panel);
+            }
+        }
+        arUIPanels.Clear();
+    }
+
+    public GameObject GetSpawnedRobot()
+    {
+        return spawnedRobot;
+    }
+
+    public void SendCommandToARRobot(string command)
+    {
+        if (spawnedRobot != null)
+        {
+            // Send command to the AR robot (in real implementation, 
+            // this would trigger robot behavior)
+            Debug.Log($"Sending command '{command}' to AR robot");
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (arPlaneManager != null)
+        {
+            arPlaneManager.planesChanged -= OnPlanesChanged;
+        }
+    }
+}
+```
+
+### VR Interface Components
+
+```csharp
+using UnityEngine;
+using UnityEngine.XR;
+using System.Collections.Generic;
+
+public class VRRobotInterface : MonoBehaviour
+{
+    [Header("VR Setup")]
+    public GameObject vrPlayer;
+    public GameObject leftController;
+    public GameObject rightController;
+    public LayerMask interactionLayer = 1 << 8; // Robot layer
+
+    [Header("VR Interaction")]
+    public float interactionDistance = 2.0f;
+    public bool useTeleportation = true;
+    public bool useGripControls = true;
+
+    [Header("VR UI Settings")]
+    public GameObject vrUIPrefab;
+    public Transform uiParent;
+    public float uiDistance = 1.0f;
+
+    private List<GameObject> activeVRUI = new List<GameObject>();
+    private bool isTeleporting = false;
+
+    [System.Serializable]
+    public class VRInteractionEvent : UnityEngine.Events.UnityEvent<GameObject, Vector3> { }
+
+    public VRInteractionEvent OnVRInteract = new VRInteractionEvent();
+
+    void Start()
+    {
+        InitializeVRSetup();
+        SetupVRControllers();
+    }
+
+    void InitializeVRSetup()
+    {
+        // Check if VR is properly initialized
+        if (XRSettings.enabled)
+        {
+            Debug.Log("VR is enabled");
+        }
+
+        if (vrPlayer == null)
+        {
+            vrPlayer = Camera.main != null ? Camera.main.gameObject : GameObject.FindGameObjectWithTag("MainCamera");
+        }
+    }
+
+    void SetupVRControllers()
+    {
+        if (leftController == null)
+        {
+            // Try to find controllers automatically
+            var controllers = GameObject.FindGameObjectsWithTag("VRController");
+            if (controllers.Length >= 2)
+            {
+                leftController = controllers[0];
+                rightController = controllers[1];
+            }
+        }
+    }
+
+    void Update()
+    {
+        HandleVRInput();
+        UpdateVRElements();
+    }
+
+    void HandleVRInput()
+    {
+        HandleControllerInput();
+        HandleTeleportation();
+    }
+
+    void HandleControllerInput()
+    {
+        if (rightController != null)
+        {
+            // Check for grip button press (for interaction)
+            if (useGripControls)
+            {
+                // In real VR implementation, check for grip button
+                // This is a simplified approach
+                if (Input.GetKeyDown(KeyCode.JoystickButton2)) // Assuming grip button
+                {
+                    InteractWithRobot(rightController.transform.position, rightController.transform.forward);
+                }
+            }
+        }
+
+        if (leftController != null)
+        {
+            if (Input.GetKeyDown(KeyCode.JoystickButton1)) // Menu button
+            {
+                ToggleVRInterface();
+            }
+        }
+    }
+
+    void HandleTeleportation()
+    {
+        if (!useTeleportation) return;
+
+        if (rightController != null)
+        {
+            if (Input.GetKeyDown(KeyCode.JoystickButton0)) // Trigger button
+            {
+                StartTeleportation();
+            }
+            else if (Input.GetKeyUp(KeyCode.JoystickButton0))
+            {
+                EndTeleportation();
+            }
+        }
+    }
+
+    void StartTeleportation()
+    {
+        isTeleporting = true;
+        Debug.Log("VR Teleportation started");
+    }
+
+    void EndTeleportation()
+    {
+        isTeleporting = false;
+        Debug.Log("VR Teleportation ended");
+    }
+
+    void InteractWithRobot(Vector3 controllerPos, Vector3 controllerForward)
+    {
+        // Raycast from controller to interact with robot
+        Ray ray = new Ray(controllerPos, controllerForward);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, interactionDistance, interactionLayer))
+        {
+            GameObject interactedObject = hit.collider.gameObject;
+            OnVRInteract.Invoke(interactedObject, hit.point);
+            
+            HandleVRInteraction(interactedObject, hit.point);
+        }
+    }
+
+    void HandleVRInteraction(GameObject interactedObject, Vector3 hitPoint)
+    {
+        Debug.Log($"VR interaction with {interactedObject.name} at {hitPoint}");
+        
+        // Handle the interaction based on the object type
+        if (interactedObject.CompareTag("Robot") || 
+            interactedObject.GetComponent<RobotController>() != null)
+        {
+            // Open interaction interface or send command to robot
+            OpenRobotInterface(interactedObject);
+        }
+    }
+
+    void OpenRobotInterface(GameObject robot)
+    {
+        // Create VR interface for robot interaction
+        if (vrUIPrefab != null)
+        {
+            GameObject vrUI = Instantiate(vrUIPrefab);
+            
+            // Position UI in front of player
+            Vector3 uiPosition = vrPlayer.transform.position + 
+                                vrPlayer.transform.forward * uiDistance +
+                                Vector3.up * 0.5f; // Slightly above eye level
+            
+            vrUI.transform.position = uiPosition;
+            vrUI.transform.rotation = Quaternion.LookRotation(
+                vrPlayer.transform.position - uiPosition, 
+                Vector3.up
+            );
+            
+            activeVRUI.Add(vrUI);
+        }
+    }
+
+    void UpdateVRElements()
+    {
+        // Update UI elements to face the player
+        foreach (GameObject uiElement in activeVRUI)
+        {
+            if (uiElement != null && vrPlayer != null)
+            {
+                // Make UI face the player
+                Vector3 directionToPlayer = vrPlayer.transform.position - uiElement.transform.position;
+                uiElement.transform.rotation = Quaternion.LookRotation(
+                    -directionToPlayer, 
+                    Vector3.up
+                );
+            }
+        }
+    }
+
+    void ToggleVRInterface()
+    {
+        // Toggle VR interface visibility
+        foreach (GameObject ui in activeVRUI)
+        {
+            if (ui != null)
+            {
+                Canvas canvas = ui.GetComponent<Canvas>();
+                if (canvas != null)
+                {
+                    canvas.enabled = !canvas.enabled;
+                }
+            }
+        }
+    }
+
+    // Public methods for external control
+    public void SetInteractionDistance(float distance)
+    {
+        interactionDistance = Mathf.Max(0.1f, distance);
+    }
+
+    public void EnableTeleportation(bool enable)
+    {
+        useTeleportation = enable;
+    }
+
+    public void EnableGripControls(bool enable)
+    {
+        useGripControls = enable;
+    }
+
+    public void SendVRCommand(string command, GameObject target = null)
+    {
+        Debug.Log($"VR command sent: {command}");
+        
+        if (target != null)
+        {
+            // Send command to specific robot
+            Debug.Log($"Command {command} sent to {target.name}");
+        }
+        else
+        {
+            // Send to any nearby robot
+            Collider[] nearbyRobots = Physics.OverlapSphere(
+                vrPlayer.transform.position, 
+                interactionDistance, 
+                interactionLayer
+            );
+            
+            foreach (Collider robot in nearbyRobots)
+            {
+                Debug.Log($"Command {command} sent to {robot.name}");
+            }
+        }
+    }
+
+    public List<GameObject> GetActiveVRUI()
+    {
+        return activeVRUI;
+    }
+
+    void OnDisable()
+    {
+        // Clean up VR UI when disabled
+        foreach (GameObject ui in activeVRUI)
+        {
+            if (ui != null)
+            {
+                Destroy(ui);
+            }
+        }
+        activeVRUI.Clear();
+    }
+}
+```
+
+## Exercises and Self-Check
+
+1. **UI Panel Design**: Create a Unity UI panel with robot status displays, control buttons, and sensor visualizations following best practices for HRI.
+
+2. **Gesture Recognition**: Implement a gesture recognition system that can interpret simple shapes (circle, line, arrow) to control robot movement.
+
+3. **Voice Commands**: Create a voice command system that can recognize and execute basic robot commands like "move forward," "turn left," etc.
+
+4. **AR Robot Placement**: Implement an AR interface that allows users to place a virtual robot in the real world and interact with it.
+
+5. **VR Interaction**: Design VR controls that allow users to manipulate a robot using hand controllers in a 3D environment.
+
+## Summary
+
+Human-Robot Interaction interfaces in Unity provide the bridge between human operators and robotic systems, enabling intuitive control and monitoring. This chapter covered the essential components of HRI including Unity UI fundamentals, input management, gesture recognition, voice commands, and immersive AR/VR interfaces.
+
+Effective HRI interfaces must balance functionality with usability, providing operators with the information and controls they need while maintaining intuitive and responsive interactions. The techniques and patterns discussed in this chapter provide a foundation for creating sophisticated HRI systems suitable for various robotics applications, from simple monitoring to complex collaborative tasks.
+
+---
+
+**Keywords**: Human-Robot Interaction, Unity UI, Gesture Recognition, Voice Commands, AR Interface, VR Interface, Robotics Control

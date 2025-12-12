@@ -1,0 +1,1229 @@
+---
+title: "Setting Up a Unity Scene for Robotics"
+sidebar_position: 1
+---
+
+# Setting Up a Unity Scene for Robotics
+
+## Learning Objectives
+
+By the end of this chapter, you should be able to:
+- Install and configure Unity for robotics simulation and visualization
+- Create a basic robotic scene with appropriate lighting and environment
+- Import and configure robot models for use in Unity
+- Set up coordinate system conversions between robotics frameworks and Unity
+- Implement basic scene organization and asset management for robotics projects
+- Configure Unity for real-time visualization of robotic systems
+
+## Introduction to Unity for Robotics
+
+Unity has emerged as a powerful platform for robotics visualization, simulation, and development, offering high-quality rendering, physics simulation, and cross-platform deployment capabilities. The Unity Robotics Hub and related packages provide specialized tools for integrating robotics workflows with Unity's game engine capabilities.
+
+This chapter establishes the foundation for creating professional robotics visualization environments in Unity, focusing on scene setup, model configuration, and integration with robotics frameworks.
+
+## Installing Unity for Robotics
+
+### Unity Hub and Editor Installation
+
+For robotics applications, consider these Unity version requirements:
+- **Unity Version**: 2021.3 LTS or newer recommended for stability
+- **Unity Hub**: Download from Unity's official website
+- **Modules**: Install required build targets and additional modules
+
+#### Robotics-Specific Installation Checklist
+1. **Unity Editor**: Install with the following modules:
+   - Windows/Linux/OSX Build Support
+   - Visual Studio integration (for scripting)
+   - Android Build Support (if targeting mobile devices)
+
+2. **Unity Robotics Hub**: Install through Unity Package Manager
+   - Provides robotics-specific tools and samples
+   - Includes ROS-TCP-Connector for ROS/ROS2 communication
+
+3. **Unity Computer Vision Package**: For perception tasks
+   - Provides synthetic data generation tools
+   - Includes segmentation and annotation tools
+
+### Robotics Package Installation
+
+Install essential Unity packages for robotics:
+
+```csharp
+// In Unity Package Manager, install these packages:
+// 1. com.unity.robotics.ros-tcp-connector
+// 2. com.unity.robotics.urdf-importer
+// 3. com.unity.robotics.computer-vision
+// 4. com.unity.timeline
+// 5. com.unity.recorder
+```
+
+### System Configuration
+
+Configure system for optimal robotics visualization:
+- **Graphics**: Dedicated GPU with Vulkan or DirectX 11/12 support
+- **Memory**: 16GB+ RAM for complex scenes
+- **Storage**: SSD for faster asset loading
+- **Display**: High-resolution monitor for detailed visualization
+
+## Setting Up the Basic Scene
+
+### New Scene Configuration
+
+Start with a clean robotics scene:
+
+```csharp
+using UnityEngine;
+
+public class RoboticsSceneManager : MonoBehaviour
+{
+    [Header("Scene Configuration")]
+    [Tooltip("Target frame rate for robotics simulation")]
+    public int targetFrameRate = 60;
+    
+    [Tooltip("Gravity for physics simulation")]
+    public Vector3 gravity = new Vector3(0, -9.81f, 0);
+    
+    [Header("Coordinate System")]
+    [Tooltip("Unity to Robot coordinate conversion")]
+    public CoordinateSystem coordinateSystem = CoordinateSystem.ROS;
+    
+    public enum CoordinateSystem
+    {
+        Unity,  // X-right, Y-up, Z-forward
+        ROS,    // X-forward, Y-left, Z-up
+        ROS2    // Same as ROS
+    }
+
+    void Start()
+    {
+        // Configure target frame rate
+        Application.targetFrameRate = targetFrameRate;
+        
+        // Set gravity for physics
+        Physics.gravity = gravity;
+        
+        // Initialize scene
+        SetupRoboticsEnvironment();
+    }
+
+    void SetupRoboticsEnvironment()
+    {
+        CreateBasicEnvironment();
+        ConfigureLighting();
+        SetCoordinateSystem();
+    }
+
+    void CreateBasicEnvironment()
+    {
+        // Create ground plane
+        GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        ground.name = "Ground";
+        ground.transform.position = Vector3.zero;
+        ground.transform.rotation = Quaternion.Euler(-90, 0, 0);
+        
+        // Apply material for better visualization
+        Renderer groundRenderer = ground.GetComponent<Renderer>();
+        if (groundRenderer != null)
+        {
+            groundRenderer.material = CreateGridMaterial();
+        }
+    }
+
+    void ConfigureLighting()
+    {
+        // Remove default light if exists and create robotics-appropriate lighting
+        Light[] lights = FindObjectsOfType<Light>();
+        foreach (Light light in lights)
+        {
+            DestroyImmediate(light.gameObject);
+        }
+        
+        // Add directional light
+        GameObject sunLight = new GameObject("Sun");
+        sunLight.AddComponent<Light>();
+        sunLight.GetComponent<Light>().type = LightType.Directional;
+        sunLight.transform.rotation = Quaternion.Euler(50, -30, 0);
+        sunLight.GetComponent<Light>().color = Color.white;
+        sunLight.GetComponent<Light>().intensity = 1.0f;
+        
+        // Add ambient lighting
+        RenderSettings.ambientLight = new Color(0.4f, 0.4f, 0.4f, 1);
+    }
+
+    void SetCoordinateSystem()
+    {
+        switch (coordinateSystem)
+        {
+            case CoordinateSystem.ROS:
+                // For ROS compatibility, we often need to rotate the entire scene
+                // Unity's coordinate system differs from ROS
+                break;
+            default:
+                break;
+        }
+    }
+
+    Material CreateGridMaterial()
+    {
+        Material material = new Material(Shader.Find("Unlit/Grid"));
+        material.color = new Color(0.8f, 0.8f, 0.8f, 1);
+        return material;
+    }
+}
+```
+
+### Robot Coordinate System Setup
+
+Understanding coordinate system differences is crucial:
+
+```csharp
+using UnityEngine;
+
+public class CoordinateSystemConverter : MonoBehaviour
+{
+    /// <summary>
+    /// Converts from ROS coordinate system to Unity coordinate system
+    /// ROS: X-forward, Y-left, Z-up
+    /// Unity: X-right, Y-up, Z-forward
+    /// </summary>
+    public static Vector3 RosToUnity(Vector3 rosVector)
+    {
+        return new Vector3(
+            rosVector.z,  // ROS X -> Unity Z
+            rosVector.x,  // ROS Y -> Unity X  
+            rosVector.y   // ROS Z -> Unity Y
+        );
+    }
+
+    /// <summary>
+    /// Converts from Unity coordinate system to ROS coordinate system
+    /// </summary>
+    public static Vector3 UnityToRos(Vector3 unityVector)
+    {
+        return new Vector3(
+            unityVector.y,  // Unity X -> ROS Y
+            unityVector.z,  // Unity Y -> ROS Z
+            unityVector.x   // Unity Z -> ROS X
+        );
+    }
+
+    /// <summary>
+    /// Converts from ROS quaternion to Unity quaternion
+    /// </summary>
+    public static Quaternion RosToUnity(Quaternion rosQuaternion)
+    {
+        // Convert coordinate system and handle quaternion convention
+        return new Quaternion(
+            rosQuaternion.w, // w remains w
+            rosQuaternion.x, // x corresponds to x
+            rosQuaternion.z, // y corresponds to z
+            rosQuaternion.y  // z corresponds to y
+        );
+    }
+
+    /// <summary>
+    /// Converts from Unity quaternion to ROS quaternion
+    /// </summary>
+    public static Quaternion UnityToRos(Quaternion unityQuaternion)
+    {
+        return new Quaternion(
+            unityQuaternion.w, // w remains w
+            unityQuaternion.x, // x corresponds to x
+            unityQuaternion.z, // y corresponds to z
+            unityQuaternion.y  // z corresponds to y
+        );
+    }
+}
+```
+
+## Importing Robot Models
+
+### Using URDF Importer
+
+The Unity URDF Importer provides seamless integration with ROS robot descriptions:
+
+```csharp
+using UnityEngine;
+using Unity.Robotics.URDF;
+using System.IO;
+
+public class RobotModelLoader : MonoBehaviour
+{
+    [Header("URDF Configuration")]
+    [Tooltip("Path to URDF file")]
+    public string urdfPath;
+    
+    [Tooltip("Load robot with physics")]
+    public bool loadWithPhysics = true;
+    
+    [Tooltip("Visual only (no physics)")]
+    public bool visualOnly = false;
+    
+    [Header("Import Settings")]
+    public float metersToUnits = 1.0f;
+    public bool useArticulations = true;
+    public bool convexCollision = false;
+
+    void Start()
+    {
+        if (!string.IsNullOrEmpty(urdfPath))
+        {
+            LoadRobotModel();
+        }
+    }
+
+    public void LoadRobotModel()
+    {
+        if (string.IsNullOrEmpty(urdfPath) || !File.Exists(urdfPath))
+        {
+            Debug.LogError("Invalid URDF path: " + urdfPath);
+            return;
+        }
+
+        // Load robot using URDF Importer
+        RobotRobot robot = URDFRobotLoader.LoadRobotFromPath(urdfPath);
+        if (robot != null)
+        {
+            robot.transform.SetParent(transform);
+            ConfigureRobot(robot);
+        }
+    }
+
+    void ConfigureRobot(RobotRobot robot)
+    {
+        // Apply transformation for coordinate system compatibility
+        robot.transform.position = Vector3.zero;
+        robot.transform.rotation = Quaternion.identity;
+        
+        // Configure joint controllers if needed
+        ConfigureJoints(robot);
+        
+        // Set up visualization properties
+        ConfigureVisualization(robot);
+    }
+
+    void ConfigureJoints(RobotRobot robot)
+    {
+        // Find all joint components and configure them
+        URDFJoint[] joints = robot.GetComponentsInChildren<URDFJoint>();
+        foreach (URDFJoint joint in joints)
+        {
+            ConfigureJoint(joint);
+        }
+    }
+
+    void ConfigureJoint(URDFJoint joint)
+    {
+        // Configure joint limits, motor properties, etc.
+        switch (joint.jointType)
+        {
+            case URDFJoint.JointTypes.Revolute:
+            case URDFJoint.JointTypes.Continuous:
+                ConfigureRevoluteJoint(joint);
+                break;
+            case URDFJoint.JointTypes.Prismatic:
+                ConfigurePrismaticJoint(joint);
+                break;
+        }
+    }
+
+    void ConfigureRevoluteJoint(URDFJoint joint)
+    {
+        // Configure revolute joint properties
+        ArticulationBody body = joint.GetComponent<ArticulationBody>();
+        if (body != null)
+        {
+            ArticulationDrive drive = body.xDrive;
+            drive.forceLimit = 1000f;
+            drive.damping = 10f;
+            drive.stiffness = 100f;
+            body.xDrive = drive;
+        }
+    }
+
+    void ConfigurePrismaticJoint(URDFJoint joint)
+    {
+        // Configure prismatic joint properties
+        ArticulationBody body = joint.GetComponent<ArticulationBody>();
+        if (body != null)
+        {
+            ArticulationDrive drive = body.linearXDrive;
+            drive.forceLimit = 1000f;
+            drive.damping = 10f;
+            drive.stiffness = 100f;
+            body.linearXDrive = drive;
+        }
+    }
+
+    void ConfigureVisualization(RobotRobot robot)
+    {
+        // Apply materials and visual properties
+        Renderer[] renderers = robot.GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in renderers)
+        {
+            ApplyRobotMaterial(renderer);
+        }
+    }
+
+    void ApplyRobotMaterial(Renderer renderer)
+    {
+        // Apply appropriate materials for robot visualization
+        if (renderer.material != null)
+        {
+            // Customize materials as needed
+            renderer.material.enableInstancing = true;
+        }
+    }
+}
+```
+
+### Manual Robot Model Setup
+
+For non-URDF robot models:
+
+```csharp
+using UnityEngine;
+
+public class ManualRobotSetup : MonoBehaviour
+{
+    [Header("Robot Configuration")]
+    public GameObject robotModel;
+    public RobotLink[] robotLinks;
+    public RobotJoint[] robotJoints;
+
+    [System.Serializable]
+    public class RobotLink
+    {
+        public string name;
+        public GameObject linkObject;
+        public Vector3 centerOfMass;
+        public Vector3 inertiaTensor;
+        public float mass = 1.0f;
+    }
+
+    [System.Serializable]
+    public class RobotJoint
+    {
+        public string name;
+        public Transform parentLink;
+        public Transform childLink;
+        public JointType jointType;
+        public Vector3 axis = Vector3.up;
+        public float lowerLimit = -45f;
+        public float upperLimit = 45f;
+        public float maxVelocity = 10f;
+        public float maxEffort = 100f;
+    }
+
+    public enum JointType
+    {
+        Revolute,
+        Prismatic,
+        Fixed,
+        Continuous
+    }
+
+    void Start()
+    {
+        SetupManualRobot();
+    }
+
+    void SetupManualRobot()
+    {
+        if (robotModel == null)
+        {
+            Debug.LogError("Robot model not assigned!");
+            return;
+        }
+
+        ConfigureLinks();
+        ConfigureJoints();
+    }
+
+    void ConfigureLinks()
+    {
+        foreach (RobotLink link in robotLinks)
+        {
+            if (link.linkObject != null)
+            {
+                ConfigureLink(link);
+            }
+        }
+    }
+
+    void ConfigureLink(RobotLink link)
+    {
+        Rigidbody rb = link.linkObject.GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = link.linkObject.AddComponent<Rigidbody>();
+        }
+
+        rb.mass = link.mass;
+        rb.centerOfMass = link.centerOfMass;
+        rb.inertiaTensor = link.inertiaTensor;
+        rb.inertiaTensorRotation = Quaternion.identity;
+    }
+
+    void ConfigureJoints()
+    {
+        foreach (RobotJoint joint in robotJoints)
+        {
+            ConfigureJoint(joint);
+        }
+    }
+
+    void ConfigureJoint(RobotJoint joint)
+    {
+        switch (joint.jointType)
+        {
+            case JointType.Revolute:
+                CreateRevoluteJoint(joint);
+                break;
+            case JointType.Prismatic:
+                CreatePrismaticJoint(joint);
+                break;
+            case JointType.Fixed:
+                CreateFixedJoint(joint);
+                break;
+        }
+    }
+
+    void CreateRevoluteJoint(RobotJoint joint)
+    {
+        if (joint.childLink.GetComponent<Rigidbody>() == null)
+            joint.childLink.gameObject.AddComponent<Rigidbody>();
+
+        ArticulationBody childBody = joint.childLink.GetComponent<ArticulationBody>();
+        if (childBody == null)
+        {
+            childBody = joint.childLink.gameObject.AddComponent<ArticulationBody>();
+        }
+
+        // Configure articulation drive
+        ArticulationDrive drive = new ArticulationDrive();
+        drive.forceLimit = joint.maxEffort;
+        drive.damping = 10f;
+        drive.stiffness = 100f;
+        
+        // Configure joint
+        childBody.anchor = joint.parentLink.InverseTransformPoint(joint.childLink.position);
+        childBody.linearLockX = ArticulationDofLock.LockedMotion;
+        childBody.linearLockY = ArticulationDofLock.LockedMotion;
+        childBody.linearLockZ = ArticulationDofLock.LockedMotion;
+        
+        // Set up twist joint (simplified)
+        childBody.twistLock = ArticulationDofLock.LimitedMotion;
+        childBody.swingYLock = ArticulationDofLock.LockedMotion;
+        childBody.swingZLock = ArticulationDofLock.LockedMotion;
+    }
+
+    void CreateFixedJoint(RobotJoint joint)
+    {
+        FixedJoint fixedJoint = joint.childLink.gameObject.AddComponent<FixedJoint>();
+        fixedJoint.connectedBody = joint.parentLink.GetComponent<Rigidbody>();
+    }
+}
+```
+
+## Scene Organization and Management
+
+### Robotics Scene Hierarchy
+
+Establish a proper scene organization:
+
+```
+RoboticsScene
+├── Environment
+│   ├── Ground
+│   ├── Walls
+│   ├── Obstacles
+│   └── Markers
+├── Robots
+│   ├── Robot_01
+│   │   ├── Base
+│   │   ├── Link_1
+│   │   └── Link_2
+│   └── Robot_02
+├── Cameras
+│   ├── Main_Camera
+│   ├── Tracking_Camera
+│   └── Overhead_Camera
+├── Lights
+│   ├── Directional_Light
+│   └── Spot_Lights
+├── Controllers
+│   ├── ROS_Tcp_Connector
+│   └── Robot_Controller
+└── UI
+    └── Debug_Panel
+```
+
+### Scene Management Script
+
+```csharp
+using UnityEngine;
+using System.Collections.Generic;
+
+public class RoboticsSceneManager : MonoBehaviour
+{
+    [Header("Scene Management")]
+    public GameObject environmentParent;
+    public GameObject robotsParent;
+    public GameObject camerasParent;
+    public GameObject lightsParent;
+    
+    [Header("Robot Management")]
+    public List<GameObject> loadedRobots = new List<GameObject>();
+    
+    [Header("Visualization")]
+    public bool showCoordinateAxes = true;
+    public float axisLength = 1.0f;
+    public float axisThickness = 0.05f;
+
+    void Start()
+    {
+        InitializeSceneStructure();
+        CreateVisualizationElements();
+    }
+
+    void InitializeSceneStructure()
+    {
+        // Create parent objects if they don't exist
+        if (environmentParent == null)
+        {
+            environmentParent = new GameObject("Environment");
+        }
+        
+        if (robotsParent == null)
+        {
+            robotsParent = new GameObject("Robots");
+        }
+        
+        if (camerasParent == null)
+        {
+            camerasParent = new GameObject("Cameras");
+        }
+        
+        if (lightsParent == null)
+        {
+            lightsParent = new GameObject("Lights");
+        }
+    }
+
+    void CreateVisualizationElements()
+    {
+        if (showCoordinateAxes)
+        {
+            CreateGlobalCoordinateAxes();
+        }
+    }
+
+    void CreateGlobalCoordinateAxes()
+    {
+        GameObject axesObject = new GameObject("CoordinateAxes");
+        axesObject.transform.SetParent(transform);
+
+        // X-axis (red)
+        CreateAxisIndicator(axesObject.transform, Vector3.right, Color.red, "X-Axis");
+        
+        // Y-axis (green)
+        CreateAxisIndicator(axesObject.transform, Vector3.up, Color.green, "Y-Axis");
+        
+        // Z-axis (blue)
+        CreateAxisIndicator(axesObject.transform, Vector3.forward, Color.blue, "Z-Axis");
+    }
+
+    GameObject CreateAxisIndicator(Transform parent, Vector3 direction, Color color, string name)
+    {
+        GameObject axis = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        axis.name = name;
+        axis.transform.SetParent(parent);
+        axis.transform.position = direction * axisLength / 2f;
+        axis.transform.localScale = new Vector3(axisThickness, axisLength / 2f, axisThickness);
+        
+        // Rotate to point in correct direction
+        axis.transform.LookAt(direction * axisLength);
+        axis.transform.Rotate(0, 90, 0);
+        
+        // Apply color
+        Renderer renderer = axis.GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            renderer.material = new Material(Shader.Find("Unlit/Color"));
+            renderer.material.color = color;
+        }
+        
+        // Make static to improve performance
+        axis.isStatic = true;
+        
+        return axis;
+    }
+
+    public GameObject LoadRobot(string robotName, string urdfPath)
+    {
+        // Create robot container
+        GameObject robotContainer = new GameObject(robotName);
+        robotContainer.transform.SetParent(robotsParent.transform);
+        
+        // Load robot model
+        RobotModelLoader loader = robotContainer.AddComponent<RobotModelLoader>();
+        loader.urdfPath = urdfPath;
+        loader.LoadRobotModel();
+        
+        loadedRobots.Add(robotContainer);
+        return robotContainer;
+    }
+
+    public void UnloadRobot(GameObject robot)
+    {
+        loadedRobots.Remove(robot);
+        Destroy(robot);
+    }
+
+    public void ClearScene()
+    {
+        // Clear all loaded robots
+        foreach (GameObject robot in loadedRobots)
+        {
+            if (robot != null)
+            {
+                DestroyImmediate(robot);
+            }
+        }
+        
+        loadedRobots.Clear();
+        
+        // Optionally reset other elements
+        // ...
+    }
+
+    void OnValidate()
+    {
+        // Ensure axis length is positive
+        axisLength = Mathf.Max(0.1f, axisLength);
+        axisThickness = Mathf.Max(0.01f, axisThickness);
+    }
+}
+```
+
+## Lighting and Environment Setup
+
+### Professional Lighting Setup
+
+```csharp
+using UnityEngine;
+
+public class RoboticsLightingSetup : MonoBehaviour
+{
+    [Header("Lighting Configuration")]
+    public LightType primaryLightType = LightType.Directional;
+    public Color primaryLightColor = Color.white;
+    public float primaryLightIntensity = 1.0f;
+    
+    [Header("Environmental Lighting")]
+    public float ambientIntensity = 0.3f;
+    public Color ambientColor = Color.gray;
+    
+    [Header("Shadow Configuration")]
+    public bool enableShadows = true;
+    public float shadowDistance = 50f;
+    public ShadowResolution shadowResolution = ShadowResolution.Medium;
+
+    void Start()
+    {
+        ConfigureLighting();
+        ConfigureEnvironment();
+    }
+
+    void ConfigureLighting()
+    {
+        // Clear existing lights
+        Light[] existingLights = FindObjectsOfType<Light>();
+        foreach (Light light in existingLights)
+        {
+            if (light.transform.parent == null || light.transform.parent.GetComponent<RoboticsLightingSetup>() != null)
+            {
+                DestroyImmediate(light.gameObject);
+            }
+        }
+
+        // Create primary light
+        GameObject primaryLightObj = new GameObject("Primary Light");
+        Light primaryLight = primaryLightObj.AddComponent<Light>();
+        primaryLight.type = primaryLightType;
+        primaryLight.color = primaryLightColor;
+        primaryLight.intensity = primaryLightIntensity;
+        
+        if (enableShadows)
+        {
+            primaryLight.shadows = LightShadows.Soft;
+            primaryLight.shadowResolution = shadowResolution;
+            primaryLight.shadowDistance = shadowDistance;
+        }
+
+        // Position based on type
+        if (primaryLightType == LightType.Directional)
+        {
+            primaryLightObj.transform.position = new Vector3(10, 10, 10);
+            primaryLightObj.transform.LookAt(Vector3.zero);
+        }
+
+        // Set ambient lighting
+        RenderSettings.ambientIntensity = ambientIntensity;
+        RenderSettings.ambientLight = ambientColor;
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+    }
+
+    void ConfigureEnvironment()
+    {
+        // Configure reflection probes for realistic lighting
+        ConfigureReflectionProbes();
+        
+        // Set up fog if needed for depth perception
+        RenderSettings.fog = false; // Usually turned off for robotics visualization
+        
+        // Configure skybox if desired
+        SetupSkybox();
+    }
+
+    void ConfigureReflectionProbes()
+    {
+        // Create reflection probes for accurate lighting
+        ReflectionProbe probe = gameObject.AddComponent<ReflectionProbe>();
+        probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
+        probe.size = new Vector3(50f, 50f, 50f);
+        probe.center = Vector3.zero;
+        probe.resolution = 128;
+        probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.OnAwake;
+    }
+
+    void SetupSkybox()
+    {
+        // For robotics applications, often use simple skybox or solid color
+        RenderSettings.skybox = null; // Often removed for robotics visualization
+        Camera.main.backgroundColor = Color.black; // Dark background for contrast
+    }
+
+    // Method to dynamically adjust lighting based on scene requirements
+    public void AdjustLightingForRoboticsTask(string taskType)
+    {
+        switch (taskType)
+        {
+            case "navigation":
+                SetNavigationLighting();
+                break;
+            case "manipulation":
+                SetManipulationLighting();
+                break;
+            case "perception":
+                SetPerceptionLighting();
+                break;
+        }
+    }
+
+    void SetNavigationLighting()
+    {
+        // Slightly brighter lighting for navigation tasks
+        foreach (Light light in FindObjectsOfType<Light>())
+        {
+            light.intensity = primaryLightIntensity * 1.2f;
+        }
+    }
+
+    void SetManipulationLighting()
+    {
+        // Focused lighting for manipulation tasks
+        Light[] lights = FindObjectsOfType<Light>();
+        for (int i = 0; i < lights.Length; i++)
+        {
+            if (i == 0) // Primary light
+            {
+                lights[i].intensity = primaryLightIntensity * 0.8f;
+                lights[i].type = LightType.Spot;
+                lights[i].spotAngle = 60f;
+            }
+        }
+    }
+
+    void SetPerceptionLighting()
+    {
+        // Variable lighting for testing perception algorithms
+        // Could include random lighting conditions, shadows, etc.
+    }
+}
+```
+
+## Camera Setup for Robotics Visualization
+
+### Robotics-Specific Cameras
+
+```csharp
+using UnityEngine;
+
+public class RoboticsCameraSetup : MonoBehaviour
+{
+    [Header("Camera Configuration")]
+    public CameraType[] cameraTypes = new CameraType[] { 
+        CameraType.Main, 
+        CameraType.Overhead, 
+        CameraType.Follow 
+    };
+    
+    [Header("Follow Camera Settings")]
+    public Transform targetToFollow;
+    public float followDistance = 10f;
+    public float followHeight = 5f;
+    public float smoothSpeed = 0.125f;
+
+    public enum CameraType
+    {
+        Main,
+        Overhead,
+        Follow,
+        Fixed,
+        FirstPerson
+    }
+
+    void Start()
+    {
+        SetupCameras();
+    }
+
+    void SetupCameras()
+    {
+        foreach (CameraType camType in cameraTypes)
+        {
+            CreateCamera(camType);
+        }
+    }
+
+    GameObject CreateCamera(CameraType type)
+    {
+        GameObject cameraObj = new GameObject(type.ToString() + "_Camera");
+        Camera cam = cameraObj.AddComponent<Camera>();
+        cam.tag = "MainCamera";
+        
+        // Configure based on type
+        switch (type)
+        {
+            case CameraType.Main:
+                ConfigureMainCamera(cameraObj, cam);
+                break;
+            case CameraType.Overhead:
+                ConfigureOverheadCamera(cameraObj, cam);
+                break;
+            case CameraType.Follow:
+                ConfigureFollowCamera(cameraObj, cam);
+                break;
+            case CameraType.Fixed:
+                ConfigureFixedCamera(cameraObj, cam);
+                break;
+            case CameraType.FirstPerson:
+                ConfigureFirstPersonCamera(cameraObj, cam);
+                break;
+        }
+
+        return cameraObj;
+    }
+
+    void ConfigureMainCamera(GameObject cameraObj, Camera cam)
+    {
+        cameraObj.transform.position = new Vector3(0, 10, -10);
+        cameraObj.transform.LookAt(Vector3.zero);
+        cam.fieldOfView = 60f;
+        cam.nearClipPlane = 0.1f;
+        cam.farClipPlane = 1000f;
+    }
+
+    void ConfigureOverheadCamera(GameObject cameraObj, Camera cam)
+    {
+        cameraObj.transform.position = new Vector3(0, 20, 0);
+        cameraObj.transform.rotation = Quaternion.Euler(90, 0, 0);
+        cam.orthographic = true;
+        cam.orthographicSize = 15f;
+        cam.fieldOfView = 30f;
+    }
+
+    void ConfigureFollowCamera(GameObject cameraObj, Camera cam)
+    {
+        if (targetToFollow != null)
+        {
+            // Position behind and above the target
+            cameraObj.transform.position = targetToFollow.position + 
+                new Vector3(0, followHeight, -followDistance);
+            cameraObj.transform.LookAt(targetToFollow);
+        }
+        else
+        {
+            cameraObj.transform.position = new Vector3(0, 5, -10);
+            cameraObj.transform.LookAt(Vector3.zero);
+        }
+        
+        cam.fieldOfView = 60f;
+    }
+
+    void ConfigureFixedCamera(GameObject cameraObj, Camera cam)
+    {
+        // Position at a fixed location for consistent views
+        cameraObj.transform.position = new Vector3(10, 8, -10);
+        cameraObj.transform.LookAt(Vector3.zero);
+        cam.fieldOfView = 45f;
+    }
+
+    void ConfigureFirstPersonCamera(GameObject cameraObj, Camera cam)
+    {
+        // Typically attached to robot head/chest
+        cameraObj.transform.position = new Vector3(0, 1.5f, 0); // Eye level
+        cam.fieldOfView = 90f; // Wider field of view
+    }
+
+    void LateUpdate()
+    {
+        // Update follow camera position
+        foreach (CameraType type in cameraTypes)
+        {
+            if (type == CameraType.Follow && targetToFollow != null)
+            {
+                UpdateFollowCamera();
+                break;
+            }
+        }
+    }
+
+    void UpdateFollowCamera()
+    {
+        if (targetToFollow == null) return;
+
+        Vector3 desiredPosition = targetToFollow.position + 
+            new Vector3(0, followHeight, -followDistance);
+        Vector3 smoothedPosition = Vector3.Lerp(
+            transform.position, desiredPosition, smoothSpeed);
+        
+        transform.position = smoothedPosition;
+        transform.LookAt(targetToFollow);
+    }
+
+    // Method to switch between cameras
+    public void SwitchToCamera(CameraType type)
+    {
+        Camera[] cameras = FindObjectsOfType<Camera>();
+        foreach (Camera cam in cameras)
+        {
+            if (cam.gameObject.name.Contains(type.ToString()))
+            {
+                cam.gameObject.SetActive(true);
+                // Set as main camera
+                Camera.main = cam;
+            }
+            else
+            {
+                cam.gameObject.SetActive(false);
+            }
+        }
+    }
+}
+```
+
+## Performance Optimization
+
+### Robotics Visualization Optimization
+
+```csharp
+using UnityEngine;
+
+public class RoboticsVisualizationOptimizer : MonoBehaviour
+{
+    [Header("LOD Settings")]
+    [Range(1, 4)]
+    public int lodLevel = 2;
+    
+    [Header("Rendering Optimization")]
+    public bool useOcclusionCulling = true;
+    public bool useLOD = true;
+    public bool optimizeShadows = true;
+    
+    [Header("Robot Visualization")]
+    public bool useInstancing = true;
+    public bool optimizeMeshes = true;
+    
+    void Start()
+    {
+        OptimizeScene();
+    }
+
+    void OptimizeScene()
+    {
+        ConfigureRenderingSettings();
+        OptimizeRobotModels();
+        ConfigurePhysics();
+    }
+
+    void ConfigureRenderingSettings()
+    {
+        // Use appropriate rendering path
+        Camera.main.renderingPath = RenderingPath.DeferredLighting;
+        
+        // Configure occlusion culling if enabled
+        if (useOcclusionCulling)
+        {
+            StaticOcclusionCulling.GenerateCullingData();
+        }
+        
+        // Configure shadow optimization
+        if (optimizeShadows)
+        {
+            QualitySettings.shadowDistance = 50f; // Reduce shadow distance
+            QualitySettings.shadowResolution = ShadowResolution.Medium;
+        }
+    }
+
+    void OptimizeRobotModels()
+    {
+        // Find all robot models and optimize them
+        GameObject[] robots = GameObject.FindGameObjectsWithTag("Robot");
+        
+        foreach (GameObject robot in robots)
+        {
+            OptimizeRobot(robot);
+        }
+    }
+
+    void OptimizeRobot(GameObject robot)
+    {
+        // Apply instancing if enabled
+        if (useInstancing)
+        {
+            Renderer[] renderers = robot.GetComponentsInChildren<Renderer>();
+            foreach (Renderer renderer in renderers)
+            {
+                Material[] materials = renderer.sharedMaterials;
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    if (materials[i] != null)
+                    {
+                        materials[i].enableInstancing = true;
+                    }
+                }
+                renderer.sharedMaterials = materials;
+            }
+        }
+        
+        // Optimize meshes if needed
+        if (optimizeMeshes)
+        {
+            OptimizeRobotMeshes(robot);
+        }
+        
+        // Apply LOD if enabled
+        if (useLOD)
+        {
+            ApplyLODToRobot(robot);
+        }
+    }
+
+    void OptimizeRobotMeshes(GameObject robot)
+    {
+        // Reduce polygon count for distant robots
+        MeshFilter[] meshFilters = robot.GetComponentsInChildren<MeshFilter>();
+        
+        foreach (MeshFilter filter in meshFilters)
+        {
+            // Could implement mesh simplification here
+            // For now, just ensure meshes are optimized
+            if (filter.mesh != null)
+            {
+                filter.mesh.UploadMeshData(true); // Optimize mesh data
+            }
+        }
+    }
+
+    void ApplyLODToRobot(GameObject robot)
+    {
+        // Add LOD group to robot if it makes sense for the robot
+        LODGroup lodGroup = robot.GetComponent<LODGroup>();
+        if (lodGroup == null)
+        {
+            lodGroup = robot.AddComponent<LODGroup>();
+        }
+        
+        // Configure LOD levels based on distance
+        Renderer[] renderers = robot.GetComponentsInChildren<Renderer>();
+        if (renderers.Length > 0)
+        {
+            LOD[] lods = new LOD[3];
+            
+            // LOD 0: High detail (close)
+            lods[0] = new LOD(0.5f, renderers);  // 50% of objects visible
+            
+            // LOD 1: Medium detail (medium distance)
+            Renderer[] mediumRenderers = new Renderer[renderers.Length / 2];
+            System.Array.Copy(renderers, mediumRenderers, mediumRenderers.Length);
+            lods[1] = new LOD(0.25f, mediumRenderers);  // 25% of objects visible
+            
+            // LOD 2: Low detail (far)
+            Renderer[] lowRenderers = new Renderer[] { renderers[0] }; // Just base
+            lods[2] = new LOD(0.05f, lowRenderers);  // 5% of objects visible
+            
+            lodGroup.SetLODs(lods);
+            lodGroup.RecalculateBounds();
+        }
+    }
+
+    void ConfigurePhysics()
+    {
+        // Optimize physics settings
+        Physics.autoSimulation = true;
+        Physics.autoSyncTransforms = true;
+        Physics.defaultSolverIterations = 6;  // Reduce for better performance
+        Physics.defaultSolverVelocityIterations = 1;  // Reduce for better performance
+    }
+
+    // Method to dynamically adjust optimization based on scene complexity
+    public void AdjustOptimizationForRobotCount(int robotCount)
+    {
+        if (robotCount > 10)
+        {
+            // Use higher LOD levels, reduce quality settings
+            QualitySettings.shadowDistance = 25f;
+            QualitySettings.shadowResolution = ShadowResolution.Low;
+        }
+        else if (robotCount > 20)
+        {
+            // Further reduce quality
+            QualitySettings.shadowDistance = 10f;
+            QualitySettings.shadowResolution = ShadowResolution.Low;
+        }
+        else
+        {
+            // Use higher quality settings
+            QualitySettings.shadowDistance = 50f;
+            QualitySettings.shadowResolution = ShadowResolution.Medium;
+        }
+    }
+}
+```
+
+## Exercises and Self-Check
+
+1. **Scene Setup**: Create a Unity scene with proper robotics visualization setup, including coordinate system conversion and basic environment.
+
+2. **Robot Model Import**: Import a URDF robot model into Unity and verify that all joints and links are correctly configured.
+
+3. **Camera Configuration**: Set up three different camera views (main, overhead, follow) for robot visualization and implement camera switching.
+
+4. **Performance Optimization**: Apply LOD and instancing techniques to optimize a scene with multiple robots and complex environments.
+
+5. **Lighting Setup**: Configure professional lighting for a robotics environment that works well for both visualization and potential computer vision applications.
+
+## Summary
+
+Setting up a Unity scene for robotics requires careful attention to coordinate system compatibility, robot model importation, lighting configuration, and performance optimization. The Unity Robotics Hub provides excellent tools for bridging the gap between traditional robotics frameworks and Unity's visualization capabilities.
+
+Proper scene organization with appropriate hierarchy, lighting, and camera setup creates a professional environment for robotics visualization and development. Performance considerations become critical when working with multiple robots or complex environments that need to run in real-time.
+
+The foundation established in this chapter enables the more advanced visualization and rendering techniques covered in subsequent chapters, providing a solid base for creating high-fidelity robotics applications in Unity.
+
+---
+
+**Keywords**: Unity Robotics, Scene Setup, URDF Importer, Coordinate System, Robot Visualization, Scene Management, Lighting

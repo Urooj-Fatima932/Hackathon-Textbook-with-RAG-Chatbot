@@ -1,0 +1,281 @@
+---
+title: "ROS 2 Architecture"
+sidebar_position: 1
+---
+
+# ROS 2 Architecture
+
+## Learning Objectives
+
+By the end of this chapter, you should be able to:
+- Explain the fundamental architectural concepts of ROS 2
+- Understand the differences between ROS 1 and ROS 2 architectures
+- Identify the core components of the ROS 2 system
+- Describe the DDS-based communication layer in ROS 2
+- Analyze the quality of service (QoS) policies and their applications
+- Evaluate when to use ROS 2 for robotics projects
+
+## Introduction to ROS 2
+
+Robot Operating System 2 (ROS 2) represents a major architectural redesign of the original ROS framework, addressing fundamental challenges in scalability, real-time performance, and safety-critical applications. Unlike ROS 1, which relied on the Robot Communication (roscpp/rosjava) stack built on XML-RPC, ROS 2 is built on standards-based technologies including Data Distribution Service (DDS), making it suitable for production environments and safety-critical applications.
+
+This chapter explores the architectural foundations of ROS 2, explaining how the new design enables more robust, scalable, and reliable robotic systems.
+
+## Evolution from ROS 1 to ROS 2
+
+### Limitations of ROS 1 Architecture
+
+The original ROS architecture had several limitations that drove the need for ROS 2:
+- **Single Master Architecture**: The central master node was a single point of failure
+- **Lack of Real-time Support**: No real-time communication guarantees
+- **Security Concerns**: No built-in security features
+- **Limited Quality of Service**: No configurable QoS policies
+- **Scalability Issues**: Difficult to scale to large, complex systems
+- **Cross-platform Challenges**: Primarily designed for Ubuntu/Linux systems
+
+### ROS 2 Solutions
+
+ROS 2 addresses these limitations through:
+- **Distributed Architecture**: No single master, nodes can operate independently
+- **DDS Integration**: Robust communication layer with real-time capabilities
+- **Security Features**: Built-in security and authentication
+- **Quality of Service**: Configurable policies for different application needs
+- **Enhanced Scalability**: Better support for large, complex systems
+- **Cross-platform Support**: Improved Windows, macOS, and embedded system support
+
+## Core Architecture Components
+
+### Node Structure
+
+Nodes in ROS 2 are fundamental computational units that perform robot processing tasks. Each node:
+- Encapsulates a specific functionality
+- Communicates with other nodes through messages
+- Runs in its own process space
+- Can be developed in different programming languages
+- Can run on different machines in a network
+
+### DDS (Data Distribution Service) Layer
+
+DDS serves as the middleware layer in ROS 2:
+- **Standard-Based**: Implements OMG DDS specification
+- **Real-Time Capabilities**: Provides deterministic communication
+- **Distributed Architecture**: No central coordination required
+- **Language Agnostic**: Supports multiple programming languages
+- **Vendor Neutral**: Multiple DDS implementations supported
+
+### Communication Primitives
+
+ROS 2 provides several communication patterns:
+- **Publish/Subscribe**: Asynchronous data distribution
+- **Client/Server**: Synchronous request/response patterns
+- **Action Services**: Asynchronous request/response with feedback and goal management
+
+## DDS Implementation in ROS 2
+
+### DDS Concepts
+
+DDS in ROS 2 introduces several key concepts:
+- **Domain**: Isolated communication space where participants communicate
+- **Participant**: The entity that represents a node in the DDS domain
+- **Topic**: Named data channel for communication
+- **Publisher**: Entity that sends data on a topic
+- **Subscriber**: Entity that receives data on a topic
+- **Data Writer**: Interface through which a publisher sends data
+- **Data Reader**: Interface through which a subscriber receives data
+
+### DDS Quality of Service (QoS)
+
+QoS policies allow fine-tuning of communication behavior:
+- **Reliability**: Best effort vs. reliable delivery
+- **Durability**: Last value vs. transient local vs. volatile
+- **History**: Keep last N samples vs. keep all samples
+- **Deadline**: Maximum time between data samples
+- **Liveliness**: How to detect if a publisher is alive
+- **Lifespan**: Maximum lifetime of published data
+- **Deadline**: Expected period of publications
+
+## Node and Communication Architecture
+
+### Node Composition
+
+ROS 2 supports both standalone and composed nodes:
+- **Standalone Nodes**: Run in separate processes with inter-process communication
+- **Composed Nodes**: Multiple nodes in a single process for better performance
+- **Component Architecture**: Reusable components that can be loaded into containers
+
+### Parameter Server Architecture
+
+Parameters in ROS 2 are handled differently than ROS 1:
+- **Node-Local Parameters**: Each node manages its own parameters
+- **Declarative Parameter Definition**: Parameters must be declared before use
+- **Parameter Callbacks**: Custom logic can be executed when parameters change
+- **Parameter Descriptions**: Type, range, and description for each parameter
+
+### Logging and Diagnostics
+
+ROS 2 provides improved logging and diagnostics:
+- **Standardized Logging**: Unified logging across different languages
+- **Hierarchical Log Names**: Organized logging structure
+- **Diagnostic Aggregation**: Centralized diagnostic information
+- **Runtime Configuration**: Dynamic logging level adjustment
+
+## Middleware Implementation
+
+### RMW (ROS Middleware) Layer
+
+The RMW layer abstracts DDS implementations:
+- **Middleware Agnostic**: Code works with different DDS implementations
+- **Plugin Architecture**: New middleware can be added as plugins
+- **Runtime Selection**: Middleware can be selected at runtime
+- **Abstraction Layer**: Provides ROS-specific features over DDS
+
+### Available DDS Implementations
+
+ROS 2 supports multiple DDS implementations:
+- **Fast DDS (eProsima)**: Default implementation in recent ROS 2 versions
+- **Cyclone DDS (Eclipse)**: Lightweight, high-performance implementation
+- **RTI Connext DDS**: Commercial implementation with enterprise features
+- **OpenSplice DDS**: Open-source implementation (now deprecated)
+
+## Security Architecture
+
+### Security by Design
+
+ROS 2 includes security features from the ground up:
+- **Identity Authentication**: Verify identities of ROS participants
+- **Access Control**: Control which entities can access which resources
+- **Message Encryption**: Encrypt messages in transit
+- **Audit Logging**: Log security-relevant events
+
+### Security Policy Configuration
+
+Security policies define how security is applied:
+- **Permissions**: What entities can do
+- **Allowlists/Denylists**: Which entities are trusted
+- **Encryption**: How data is encrypted
+- **Authentication**: How identities are verified
+
+## Build System Architecture
+
+### Colcon Build System
+
+ROS 2 uses colcon for building packages:
+- **Multi-package Building**: Build multiple packages efficiently
+- **Language Agnostic**: Support for multiple programming languages
+- **Parallel Building**: Build packages in parallel
+- **Flexible Configuration**: Custom build options and parameters
+
+### Package Structure
+
+ROS 2 packages have a standardized structure:
+- **package.xml**: Package metadata and dependencies
+- **CMakeLists.txt**: Build configuration for C++
+- **setup.py**: Build configuration for Python
+- **Launch Files**: Configuration for starting nodes
+- **Configuration Files**: Parameters and settings
+- **Test Files**: Unit and integration tests
+
+## Lifecycle Management
+
+### Node Lifecycle
+
+ROS 2 provides explicit lifecycle management:
+- **Unconfigured State**: Node resources not yet allocated
+- **Inactive State**: Node resources allocated but not active
+- **Active State**: Node is fully operational
+- **Finalized State**: Node is shutting down
+
+### Lifecycle Nodes
+
+Specialized nodes for complex state management:
+- **State Transitions**: Controlled transitions between states
+- **Service Interfaces**: Standardized services for lifecycle management
+- **Callback Management**: Custom logic for state transitions
+- **Integration**: Easy integration with launch files and tools
+
+## Time and Clock Management
+
+### Time Abstraction
+
+ROS 2 provides sophisticated time management:
+- **ROS Time**: Abstract time that can be simulated
+- **System Time**: Real system time
+- **Simulated Time**: Time from simulation environments
+- **Clock Types**: Different clock representations for different needs
+
+### Rate and Timer Abstraction
+
+Time-based execution control:
+- **Rate Control**: Execute at specific rates
+- **Timer Callbacks**: Execute code at specific times
+- **Synchronization**: Coordinate time across distributed nodes
+- **Periodic Execution**: Reliable periodic task execution
+
+## Advanced Architecture Features
+
+### Real-time Support
+
+ROS 2 includes real-time capabilities:
+- **Real-time Scheduling**: Support for real-time operating systems
+- **Memory Management**: Real-time safe memory allocation
+- **Communication Timing**: Predictable communication timing
+- **Thread Management**: Real-time thread control and priorities
+
+### Cross-compilation and Deployment
+
+Architecture supports deployment on various platforms:
+- **Embedded Systems**: Support for resource-constrained devices
+- **Cross-compilation Tools**: Build for different target platforms
+- **Container Support**: Docker and other container technologies
+- **Cloud Integration**: Cloud-based robotics applications
+
+## Performance Considerations
+
+### Memory Management
+
+Efficient memory usage in ROS 2:
+- **Zero-copy Transport**: When possible, avoid data copying
+- **Memory Pooling**: Reuse memory allocations
+- **ROS Message Types**: Efficient message representation
+- **Serialization**: Fast and efficient message serialization
+
+### Network Communication
+
+Optimized network usage:
+- **Local Communication**: Efficient intra-process and inter-process communication
+- **Remote Communication**: Optimized for network-based communication
+- **Bandwidth Management**: Control and optimize network usage
+- **Latency Optimization**: Minimize communication delays
+
+## Migration Considerations
+
+### From ROS 1 to ROS 2
+
+Key architectural differences affecting migration:
+- **Communication Model**: Different underlying communication
+- **Build System**: Different build and package management
+- **Tooling**: Different tools and debugging approach
+- **Security**: New security considerations
+- **Quality of Service**: New QoS policies to consider
+
+## Exercises and Self-Check
+
+1. **Conceptual Analysis**: Compare the communication architectures of ROS 1 and ROS 2. What are the main differences and why were they made?
+
+2. **Design Challenge**: Design a ROS 2 system architecture for a mobile robot with sensors, actuators, and perception algorithms. Show the nodes, topics, and QoS policies you would use.
+
+3. **Technical Question**: Explain how DDS enables the distributed architecture of ROS 2. What advantages does this provide over the ROS 1 architecture?
+
+4. **Quality of Service Problem**: For a robot performing real-time control, which QoS policies would you use for sensor data, control commands, and diagnostic information? Justify your choices.
+
+5. **Security Analysis**: Describe the security architecture of ROS 2 and explain why it's important for production robotics systems.
+
+## Summary
+
+ROS 2 represents a fundamental architectural redesign that addresses the limitations of ROS 1 for modern robotics applications. The DDS-based communication layer, distributed architecture, and built-in security make ROS 2 suitable for production, safety-critical, and large-scale robotic systems.
+
+Understanding the ROS 2 architecture is crucial for developing effective robotic applications, as the architectural decisions directly impact system performance, maintainability, and scalability. The modular, standards-based design enables ROS 2 to support a wide range of robotic applications while maintaining the flexibility and extensibility that made ROS popular in the first place.
+
+---
+
+**Keywords**: ROS 2, DDS, Middleware, Architecture, Quality of Service, Real-time, Security, Distributed Systems, Robotics

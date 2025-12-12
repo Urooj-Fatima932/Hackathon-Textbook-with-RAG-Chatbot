@@ -1,0 +1,145 @@
+# Exercises and Self-Check Questions - Week 9: Reinforcement Learning & Sim-to-Real
+
+## Chapter 1: Fundamentals of Reinforcement Learning for Robotics
+
+### RL Theory and Concepts
+1. **MDP Formulation**: Formulate a specific robotics task (e.g., door opening, ball balancing) as an MDP. Define the states, actions, transition probabilities, and reward function.
+
+2. **Algorithm Selection**: For a continuous control task like robotic arm manipulation, compare Q-learning, DDPG, and PPO. Explain when to use each one.
+
+3. **Value Functions**: Explain the difference between state-value and action-value functions. When would you use each in robotics applications?
+
+4. **Exploration Strategies**: Compare different exploration strategies (epsilon-greedy, Boltzmann, curiosity-driven) for robotic tasks. What are the trade-offs?
+
+### Reward Function Design
+5. **Sparse vs Dense Rewards**: Design both sparse and dense rewards for a robot learning to navigate to a target location. Discuss the pros and cons of each.
+
+6. **Safety Integration**: How would you incorporate safety considerations into the reward function for a mobile robot operating in human environments?
+
+7. **Multi-Objective Rewards**: Design a reward function for a robot that needs to minimize energy consumption while maximizing task completion speed.
+
+8. **Shaped Rewards**: Create a shaped reward function for a robot learning to stack blocks. How does reward shaping affect learning?
+
+### Implementation Considerations
+9. **Continuous Action Spaces**: Explain the challenges of continuous action spaces in robotics and how they're addressed by algorithms like DDPG and SAC.
+
+10. **Sample Efficiency**: Design strategies to improve sample efficiency for RL training on a real robot where samples are expensive.
+
+## Chapter 2: Training an RL Agent in Isaac Sim (Sim-to-Sim)
+
+### Isaac Sim Environment Setup
+1. **Environment Design**: Design an Isaac Sim environment for training a robot to grasp objects. What physics, sensors, and randomization would you include?
+
+2. **Robot Configuration**: How would you configure a robot in Isaac Sim for RL training? What physical and sensor properties are important?
+
+3. **Training Infrastructure**: Explain how to set up parallel training in Isaac Sim. What are the benefits and challenges?
+
+4. **State and Action Spaces**: Design appropriate state and action spaces for a quadruped robot learning to walk.
+
+### Domain Randomization
+5. **Visual Randomization**: Implement a domain randomization strategy for visual perception tasks in Isaac Sim. What parameters would you randomize?
+
+6. **Physics Randomization**: How would you randomize physics parameters for a manipulation task? What parameters are most important?
+
+7. **Curriculum Learning**: Design a curriculum for teaching a robot to walk in Isaac Sim, starting simple and gradually increasing complexity.
+
+8. **Adaptive Randomization**: Explain how you would adapt domain randomization based on agent learning progress.
+
+### Algorithm Implementation
+9. **DDPG Configuration**: Configure a DDPG agent in Isaac Sim for a continuous control task. What hyperparameters are most important?
+
+10. **PPO Implementation**: Implement a PPO agent for a discrete action space robotics task. How does it differ from DDPG?
+
+11. **Multi-Agent Training**: How would you set up multi-agent RL training in Isaac Sim for cooperative tasks?
+
+12. **Performance Optimization**: What techniques would you use to optimize the performance of RL training in Isaac Sim?
+
+## Chapter 3: Techniques for Sim-to-Real Transfer
+
+### Reality Gap Analysis
+1. **Gap Identification**: Identify the five most significant sources of reality gap for a specific robot and task (e.g., mobile manipulator).
+
+2. **Physics Modeling**: How would you model and address differences in friction, compliance, and dynamics between simulation and reality?
+
+3. **Sensor Differences**: Explain strategies to address differences between simulated and real sensors.
+
+4. **Actuator Modeling**: How would you model actuator delays, backlash, and other real-world actuator characteristics?
+
+### Domain Randomization for Transfer
+5. **Extensive Randomization**: Design a domain randomization strategy that bridges the sim-to-real gap for a specific robotic task.
+
+6. **Curriculum-Based Randomization**: Create a curriculum that gradually increases the difficulty of randomization as the robot learns.
+
+7. **Systematic Randomization**: How would you determine the appropriate ranges for randomization parameters?
+
+### System Identification and Calibration
+8. **Parameter Estimation**: Explain how you would perform system identification for a 7-DOF robotic arm using experimental data.
+
+9. **Calibration Protocol**: Design a calibration protocol to match simulation to reality for a specific robot.
+
+10. **Online Adaptation**: How would you implement online adaptation of simulation parameters during real-world deployment?
+
+### Advanced Transfer Techniques
+11. **Domain Adaptation**: Explain how adversarial domain adaptation could be used for sim-to-real transfer.
+
+12. **Meta-Learning**: How would you use meta-learning to enable fast adaptation to new real-world conditions?
+
+13. **Learning from Demonstrations**: Design a strategy to combine expert demonstrations with RL for improved sim-to-real transfer.
+
+14. **Multi-Task Transfer**: How would you transfer a policy trained on multiple tasks in simulation to real-world execution?
+
+### Validation and Safety
+15. **Safety Protocols**: Design safety protocols for deploying a learned policy on a real robot for the first time.
+
+16. **Validation Metrics**: What metrics would you use to evaluate the success of sim-to-real transfer?
+
+17. **Failure Analysis**: How would you analyze and categorize failures in sim-to-real transfer?
+
+18. **Recovery Strategies**: Design recovery strategies if a transferred policy fails during real-world execution.
+
+## Synthesis Questions (Cross-Chapter)
+
+1. **Complete Pipeline**: Design a complete pipeline from simulation training to real-world deployment for a specific robotic task. Include environment design, training algorithm, domain randomization, and transfer techniques.
+
+2. **Algorithm Comparison**: Compare DDPG, PPO, and SAC for sim-to-real transfer. What are the advantages and disadvantages of each for different tasks?
+
+3. **Transfer Optimization**: How would you optimize the balance between simulation training time, domain randomization extent, and real-world fine-tuning for optimal transfer?
+
+4. **Safety Integration**: Design a complete system that ensures safe sim-to-real transfer, including safety-aware rewards, validation protocols, and physical safety measures.
+
+5. **Multi-Robot Transfer**: Design a sim-to-real transfer strategy for multiple robots learning coordinated behaviors.
+
+## Practical Projects
+
+1. **Simple Manipulation**: Design a complete sim-to-real pipeline for teaching a robot to grasp a specific object using Isaac Sim.
+
+2. **Navigation Task**: Create a navigation policy in Isaac Sim and design the transfer process to a real mobile robot.
+
+3. **Locomotion**: Design a learning system for teaching a quadruped robot to walk with sim-to-real transfer.
+
+4. **Complex Task**: Design a learning system for a robot to perform a multi-step task (e.g., find object, grasp it, and place it) with effective sim-to-real transfer.
+
+## Self-Assessment Rubric
+
+Rate your understanding of each concept from 1-5 (5 = expert level):
+
+**Chapter 1:**
+- MDP formulation: ___/5
+- RL algorithms: ___/5
+- Reward design: ___/5
+- Continuous control: ___/5
+- Sample efficiency: ___/5
+
+**Chapter 2:**
+- Isaac Sim setup: ___/5
+- Domain randomization: ___/5
+- Training infrastructure: ___/5
+- Algorithm implementation: ___/5
+- Performance optimization: ___/5
+
+**Chapter 3:**
+- Reality gap analysis: ___/5
+- Transfer techniques: ___/5
+- System identification: ___/5
+- Validation protocols: ___/5
+- Safety considerations: ___/5

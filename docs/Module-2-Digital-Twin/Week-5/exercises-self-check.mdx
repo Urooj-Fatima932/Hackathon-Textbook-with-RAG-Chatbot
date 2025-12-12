@@ -1,0 +1,132 @@
+# Exercises and Self-Check Questions - Week 5: Unity Visualization
+
+## Chapter 1: Setting Up a Unity Scene for Robotics
+
+### Scene Configuration
+1. **Installation Process**: List the steps required to set up Unity for robotics applications with URP. What packages need to be installed?
+
+2. **Coordinate System Conversion**: Create a conversion function that transforms coordinates between ROS (X-forward, Y-left, Z-up) and Unity (X-right, Y-up, Z-forward) coordinate systems.
+
+3. **Robot Model Setup**: Configure a URDF robot model in Unity using the URDF Importer. What settings need to be configured for proper physics simulation?
+
+4. **Camera Configuration**: Set up three different camera views (main, overhead, follow) for robot visualization. How would you implement smooth transitions between cameras?
+
+### Lighting and Environment
+5. **Lighting Setup**: Design a lighting configuration suitable for robotics visualization that works well for both human viewing and synthetic data generation.
+
+6. **Performance Optimization**: Identify three key areas to optimize for better performance in a robotics scene with multiple robots.
+
+7. **Scene Management**: Create a scene management system that can handle multiple robots while maintaining good performance and organization.
+
+### Advanced Configuration
+8. **LOD Implementation**: Implement a Level of Detail (LOD) system for robot models that activates based on distance from camera.
+
+9. **Physics Configuration**: Configure Unity physics settings that provide realistic robot behavior while maintaining real-time performance.
+
+## Chapter 2: High-Fidelity Rendering and Animation
+
+### Material and Rendering
+1. **PBR Materials**: Create Physically-Based Rendering materials for different robot components (structural, actuator, sensor) with appropriate metallic, roughness, and normal maps.
+
+2. **Rendering Pipeline**: Configure Universal Render Pipeline (URP) settings specifically for robotics applications. What settings differ from standard game development?
+
+3. **Performance vs Quality**: How would you balance rendering quality with performance requirements for real-time robotics applications?
+
+4. **Advanced Shaders**: Implement a shader that visualizes robot joint status (active, disabled, warning) using color coding.
+
+### Animation Systems
+5. **Inverse Kinematics**: Implement a basic inverse kinematics system for a 3-DOF robot arm that can reach a target position.
+
+6. **Animation Controller**: Create an animation state machine that transitions between different robot behaviors (idle, walking, manipulation).
+
+7. **Joint Limits**: Implement joint limit constraints in the animation system to prevent physically impossible robot poses.
+
+8. **Motion Planning Integration**: How would you integrate pre-computed motion plans with Unity's animation system?
+
+### Visual Effects
+9. **Particle Systems**: Design particle effects for robot joint visualization, contact points, and status indicators.
+
+10. **Real-time Optimization**: What techniques would you use to maintain high frame rates when rendering multiple animated robots?
+
+## Chapter 3: Building a Human-Robot Interaction Interface in Unity
+
+### UI Design
+1. **Dashboard Layout**: Design a UI dashboard that displays robot status (battery, sensors, position, tasks) in an intuitive way for operators.
+
+2. **Control Interface**: Create virtual controls (joysticks, buttons) for robot navigation and manipulation that work well with different input methods.
+
+3. **Information Hierarchy**: How would you prioritize and organize different types of information on the HRI interface?
+
+4. **Responsive Design**: Design the UI to work across different screen sizes and aspect ratios while maintaining usability.
+
+### Interaction Systems
+5. **Gesture Recognition**: Implement a simple gesture recognition system that can interpret basic commands (move, turn, stop).
+
+6. **Voice Commands**: Create a voice command system with feedback that allows operators to control robot behavior through spoken commands.
+
+7. **Touch/Mouse Interaction**: Design an interface that allows precise robot control through touch/mouse interactions.
+
+8. **Multi-Modal Input**: How would you combine multiple input methods (voice, gesture, touch) to create more natural interactions?
+
+### AR/VR Integration
+9. **AR Interface**: Design an AR interface that overlays robot information and controls onto the real world for robot monitoring.
+
+10. **VR Interaction**: Create VR controls that allow users to manipulate a robot using hand controllers in 3D space.
+
+11. **Immersive Feedback**: How would you provide haptic or visual feedback to enhance the VR/AR interaction experience?
+
+### Advanced Interface Features
+12. **Command Sequencing**: Design an interface that allows operators to create and execute sequences of robot commands.
+
+13. **Debugging Tools**: Create debugging interfaces that help developers understand robot behavior and sensor data.
+
+14. **Multi-Robot Control**: Design an interface that allows simultaneous control of multiple robots while maintaining clarity.
+
+## Synthesis Questions (Cross-Chapter)
+
+1. **Complete HRI System**: Design a complete Unity-based human-robot interaction system that includes: realistic robot visualization, intuitive controls, real-time sensor visualization, and performance optimization.
+
+2. **Rendering-Interaction Balance**: How do high-fidelity rendering requirements affect the design of real-time interaction systems?
+
+3. **VR/AR HRI**: Design a VR/AR interface that combines high-fidelity rendering with natural interaction for human-robot collaboration.
+
+4. **Performance Optimization**: How would you optimize a Unity scene with 10+ robots, each with detailed meshes, animations, and real-time interaction?
+
+5. **Multi-Modal Interface**: Create a comprehensive interface that integrates UI, voice, gesture, and VR/AR interaction methods for robot control.
+
+## Practical Projects
+
+1. **Robot Control Dashboard**: Create a Unity scene with a robot model and a comprehensive UI dashboard for controlling and monitoring the robot.
+
+2. **AR Robot Placement**: Implement an AR system that allows users to place virtual robots in real-world environments and interact with them.
+
+3. **Animation System**: Build an animation system that combines inverse kinematics, joint constraints, and motion blending for realistic robot movement.
+
+4. **Voice-Gesture Interface**: Create a system that accepts both voice commands and gesture input to control robot behavior.
+
+5. **Multi-Robot Environment**: Set up a Unity scene with multiple robots, each with individual control interfaces and visualization.
+
+## Self-Assessment Rubric
+
+Rate your understanding of each concept from 1-5 (5 = expert level):
+
+**Chapter 1:**
+- Unity scene setup for robotics: ___/5
+- Coordinate system conversion: ___/5
+- Robot model import and configuration: ___/5
+- Performance optimization: ___/5
+- Lighting and environment setup: ___/5
+
+**Chapter 2:**
+- PBR materials and rendering: ___/5
+- Animation systems: ___/5
+- Inverse kinematics: ___/5
+- Visual effects: ___/5
+- Performance optimization: ___/5
+
+**Chapter 3:**
+- UI/UX design for HRI: ___/5
+- Interaction systems: ___/5
+- Voice command interface: ___/5
+- AR/VR integration: ___/5
+- Multi-modal interfaces: ___/5
