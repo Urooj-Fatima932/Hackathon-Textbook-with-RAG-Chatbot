@@ -7,9 +7,8 @@ import ChapterInfoDisplay from './src/components/ChapterInfoDisplay';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'My Site',
+  title: 'Physical AI & Humanoid Robotics',
   tagline: 'Dinosaurs are cool',
-  favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -127,7 +126,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: "Made with ❤️ by Urooj Fatima",
     },
     prism: {
       theme: prismThemes.github,
