@@ -1,14 +1,12 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
-import PlaceholderImage from './src/components/UI/PlaceholderImage';
-import ChapterInfoDisplay from './src/components/ChapterInfoDisplay';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
   title: 'Physical AI & Humanoid Robotics',
-  tagline: 'Dinosaurs are cool',
+  tagline: 'Learn ROS2, Digital Twins, NVIDIA Isaac, and Vision-Language-Action Systems',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -69,6 +67,30 @@ const config: Config = {
     ],
   ],
 
+  plugins: [
+    // Plugin to expose environment variables to the client
+    async function myPlugin(context, options) {
+      return {
+        name: 'docusaurus-plugin-env',
+        configureWebpack(config, isServer) {
+          const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+          return {
+            resolve: {
+              fallback: {
+                process: require.resolve('process/browser'),
+              },
+            },
+            plugins: [
+              new (require('webpack').DefinePlugin)({
+                'process.env.REACT_APP_API_BASE_URL': JSON.stringify(apiBaseUrl),
+              }),
+            ],
+          };
+        },
+      };
+    },
+  ],
+
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
@@ -84,7 +106,7 @@ const config: Config = {
           position: 'left',
           label: 'Book',
         },
-       
+
         {
           href: 'https://github.com/your-repo',
           label: 'GitHub',

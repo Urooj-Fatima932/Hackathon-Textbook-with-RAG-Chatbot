@@ -6,7 +6,7 @@ interface PlaceholderImageProps {
   dimensions: string; // e.g., "800x400"
 }
 
-export default function PlaceholderImage({ type, description, dimensions }: PlaceholderImageProps): JSX.Element {
+export default function PlaceholderImage({ type, description, dimensions }: PlaceholderImageProps): React.JSX.Element {
   return (
     <div
       style={{
