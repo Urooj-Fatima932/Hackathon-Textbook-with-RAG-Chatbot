@@ -1,140 +1,317 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
-/**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
- */
+/* ============================================
+   THEME: Emerald Green & Dark
+   ============================================ */
 
-/* You can override the default Infima variables here. */
 :root {
-  --ifm-font-family-base: 'Inter', system-ui, sans-serif;
-  --ifm-font-family-monospace: 'Fira Code', monospace;
+  --ifm-font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', 'Fira Code', monospace;
 
   --ifm-spacing-unit: 8px;
-  --spacing-x-small: 8px; /* 1x base unit */
-  --spacing-small: 16px;   /* 2x base unit */
-  --spacing-medium: 24px;  /* 3x base unit */
-  --spacing-large: 32px;   /* 4x base unit */
-  --spacing-x-large: 48px; /* 6x base unit */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
 
-  --ifm-color-primary: #F28C28;
-  --ifm-color-primary-dark: #CC5500;
-  --ifm-color-primary-darker: #FF7518;
-  --ifm-color-primary-darkest: #CC5500;
-  --ifm-color-primary-light: #E3963E;
-  --ifm-color-primary-lighter: #FFAC1C;
-  --ifm-color-primary-lightest: #FFBF00;
+  /* Primary: emerald green */
+  --ifm-color-primary: #10B981;
+  --ifm-color-primary-dark: #059669;
+  --ifm-color-primary-darker: #047857;
+  --ifm-color-primary-darkest: #065F46;
+  --ifm-color-primary-light: #34D399;
+  --ifm-color-primary-lighter: #6EE7B7;
+  --ifm-color-primary-lightest: #A7F3D0;
 
-  --ifm-background-color: #F8F8F8;
-  --ifm-font-color-base: #333333;
-  
-  --custom-text-secondary: #4A5568;
-  --custom-borders-dividers: #E2E8F0;
+  /* Surfaces - light mode */
+  --ifm-background-color: #F9FAFB;
+  --custom-surface-elevated: #FFFFFF;
+  --custom-surface-sunken: #F3F4F6;
 
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  /* Text */
+  --ifm-font-color-base: #111827;
+  --custom-text-secondary: #6B7280;
+  --custom-text-tertiary: #9CA3AF;
+
+  /* Borders */
+  --custom-borders-dividers: #E5E7EB;
+  --custom-borders-subtle: #F3F4F6;
+
+  /* Accents */
+  --custom-accent-glow: rgba(16, 185, 129, 0.12);
+  --custom-accent-muted: rgba(16, 185, 129, 0.08);
+
+  --docusaurus-highlighted-code-line-bg: rgba(16, 185, 129, 0.08);
+
+  /* Radius */
+  --custom-radius-sm: 6px;
+  --custom-radius-md: 10px;
+  --custom-radius-lg: 16px;
+  --custom-radius-xl: 20px;
+
+  /* Shadows */
+  --custom-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --custom-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07);
+  --custom-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.1);
+  --custom-shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.12);
+
+  --ifm-heading-font-weight: 700;
+  --ifm-font-weight-semibold: 600;
+  --ifm-line-height-base: 1.65;
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
+/* Dark mode - the star of the show */
 [data-theme='dark'] {
-  --ifm-color-primary: #F28C28;
-  --ifm-color-primary-dark: #CC5500;
-  --ifm-color-primary-darker: #FF7518;
-  --ifm-color-primary-darkest: #CC5500;
-  --ifm-color-primary-light: #E3963E;
-  --ifm-color-primary-lighter: #FFAC1C;
-  --ifm-color-primary-lightest: #FFBF00;
+  --ifm-color-primary: #34D399;
+  --ifm-color-primary-dark: #10B981;
+  --ifm-color-primary-darker: #059669;
+  --ifm-color-primary-darkest: #047857;
+  --ifm-color-primary-light: #6EE7B7;
+  --ifm-color-primary-lighter: #A7F3D0;
+  --ifm-color-primary-lightest: #D1FAE5;
 
-  --ifm-background-color: #080808;
-  --ifm-font-color-base: #E0E0E0;
+  --ifm-background-color: #0B0F14;
+  --custom-surface-elevated: #111820;
+  --custom-surface-sunken: #070A0E;
 
-  --custom-text-secondary: #A0AEC0;
-  --custom-borders-dividers: #2D3748;
+  --ifm-font-color-base: #E5E7EB;
+  --custom-text-secondary: #9CA3AF;
+  --custom-text-tertiary: #6B7280;
 
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --custom-borders-dividers: #1E2A35;
+  --custom-borders-subtle: #151D26;
+
+  --custom-accent-glow: rgba(52, 211, 153, 0.1);
+  --custom-accent-muted: rgba(52, 211, 153, 0.06);
+
+  --docusaurus-highlighted-code-line-bg: rgba(52, 211, 153, 0.1);
+
+  --custom-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --custom-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --custom-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --custom-shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.6);
 }
 
+/* ============================================
+   GLOBAL ELEMENTS
+   ============================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Buttons */
 .button--primary {
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 12px 24px;
+  border-radius: var(--custom-radius-md);
   background-color: var(--ifm-color-primary);
-  color: white;
-  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  color: #FFFFFF;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border: none;
+  transition: all 0.2s ease;
 }
 
 .button--primary:hover {
   background-color: var(--ifm-color-primary-dark);
-  box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+  color: #FFFFFF;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  transform: translateY(-1px);
+}
+
+[data-theme='dark'] .button--primary {
+  color: #0B0F14;
+  font-weight: 700;
+}
+
+[data-theme='dark'] .button--primary:hover {
+  color: #0B0F14;
+  box-shadow: 0 0 24px rgba(52, 211, 153, 0.35);
 }
 
 .button--secondary {
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 12px 24px;
+  border-radius: var(--custom-radius-md);
   background-color: transparent;
   color: var(--ifm-color-primary);
-  border: 1px solid var(--ifm-color-primary);
-  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  border: 1.5px solid var(--ifm-color-primary);
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 .button--secondary:hover {
-  background-color: var(--ifm-color-primary);
-  color: white;
+  background-color: var(--custom-accent-muted);
+  color: var(--ifm-color-primary);
+  border-color: var(--ifm-color-primary-light);
 }
 
+/* Cards */
 .card--custom {
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: var(--custom-radius-lg);
+  padding: var(--spacing-lg);
   border: 1px solid var(--custom-borders-dividers);
-  background-color: var(--ifm-background-color);
-  transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  background-color: var(--custom-surface-elevated);
+  transition: all 0.25s ease;
+  box-shadow: var(--custom-shadow-sm);
 }
 
 .card--custom:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+  transform: translateY(-2px);
+  box-shadow: var(--custom-shadow-lg);
+  border-color: var(--ifm-color-primary);
 }
 
-[data-theme='dark'] .card--custom {
-  background-color: var(--custom-surface);
-  border-color: var(--custom-borders-dividers);
-}
-
-/* Tablet and up */
-@media (min-width: 768px) {
-  .theme-doc-sidebar-container {
-    width: 280px;
-  }
-}
-
-/* Mobile only */
-@media (max-width: 767px) {
-  /* Add mobile-specific styles here */
-}
-
+/* Navbar */
 .navbar {
   min-height: 64px;
   border-bottom: 1px solid var(--custom-borders-dividers);
+  backdrop-filter: blur(16px);
+  background-color: rgba(249, 250, 251, 0.8) !important;
+}
+
+[data-theme='dark'] .navbar {
+  background-color: rgba(11, 15, 20, 0.8) !important;
+  border-bottom-color: var(--custom-borders-dividers);
+}
+
+.navbar__title {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.navbar__link {
+  font-weight: 500;
 }
 
 @media (max-width: 996px) {
   .navbar {
     height: auto;
-    min-height: 64px;
+    min-height: 56px;
   }
 }
 
-/* Desktop only */
-@media (min-width: 997px) { /* equivalent to --ifm-breakpoint-lg + 1px */
+/* Sidebar */
+@media (min-width: 768px) {
+  .theme-doc-sidebar-container {
+    width: 280px;
+    border-right: 1px solid var(--custom-borders-dividers) !important;
+  }
+}
+
+.menu__link {
+  font-weight: 450;
+  border-radius: var(--custom-radius-sm);
+  transition: all 0.15s ease;
+}
+
+.menu__link--active {
+  font-weight: 600;
+  color: var(--ifm-color-primary) !important;
+  background-color: var(--custom-accent-muted) !important;
+}
+
+/* Table of Contents */
+@media (min-width: 997px) {
   .table-of-contents {
     width: 240px;
   }
 }
 
-/* Tablet and mobile */
-@media (max-width: 996px) { /* equivalent to --ifm-breakpoint-lg */
+@media (max-width: 996px) {
   .table-of-contents {
     display: none;
   }
+}
+
+.table-of-contents__link {
+  font-size: 0.85rem;
+  color: var(--custom-text-secondary);
+  transition: color 0.15s ease;
+}
+
+.table-of-contents__link--active {
+  color: var(--ifm-color-primary) !important;
+  font-weight: 600;
+}
+
+/* Footer */
+.footer--dark {
+  background-color: #060A0E !important;
+  border-top: 1px solid #1E2A35;
+}
+
+.footer__title {
+  color: #E5E7EB !important;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.footer__link-item {
+  color: #9CA3AF !important;
+  transition: color 0.15s ease;
+}
+
+.footer__link-item:hover {
+  color: var(--ifm-color-primary) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--custom-borders-dividers);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--custom-text-tertiary);
+}
+
+/* Selection */
+::selection {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: inherit;
+}
+
+[data-theme='dark'] ::selection {
+  background-color: rgba(52, 211, 153, 0.25);
+}
+
+/* Doc page content */
+.markdown h1 {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.markdown h2 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--custom-borders-subtle);
+}
+
+.markdown h3 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Code blocks */
+.prism-code {
+  border-radius: var(--custom-radius-md) !important;
+  border: 1px solid var(--custom-borders-dividers) !important;
 }

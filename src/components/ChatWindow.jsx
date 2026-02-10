@@ -59,8 +59,8 @@ const ChatWindow = ({ isOpen, onClose, messages, sendMessage, isLoading }) => {
       height: height,
       maxWidth: maxWidth,
       backgroundColor: 'var(--ifm-background-color)',
-      borderRadius: '8px', // rounded-lg
-      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', // shadow-xl
+      borderRadius: '16px',
+      boxShadow: '0 16px 48px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--custom-borders-dividers)',
       border: '1px solid var(--custom-borders-dividers)',
       display: 'flex',
       flexDirection: 'column',
@@ -75,7 +75,7 @@ const ChatWindow = ({ isOpen, onClose, messages, sendMessage, isLoading }) => {
       padding: isMobile ? '12px' : '16px', // p-3 or p-4
       borderBottom: '1px solid var(--custom-borders-dividers)',
       backgroundColor: 'var(--ifm-background-color)',
-      borderRadius: '8px 8px 0 0' // rounded-t-lg
+      borderRadius: '16px 16px 0 0'
     };
   
     const headerContentStyle = {
@@ -154,7 +154,7 @@ const ChatWindow = ({ isOpen, onClose, messages, sendMessage, isLoading }) => {
 
       backgroundColor: 'var(--ifm-background-color)',
 
-      borderRadius: '0 0 8px 8px' // rounded-b-lg
+      borderRadius: '0 0 16px 16px'
 
     };
 
@@ -284,7 +284,7 @@ const ChatWindow = ({ isOpen, onClose, messages, sendMessage, isLoading }) => {
                             <div style={{
                               width: '12px',
                               height: '12px',
-                              backgroundColor: 'orange',
+                              backgroundColor: 'var(--ifm-color-primary)',
                               borderRadius: '50%',
                               animation: 'blink 1.5s ease-in-out infinite'
                             }}></div>

@@ -99,6 +99,10 @@ const config: Config = {
     },
     navbar: {
       title: 'Physical AI & Humanoid Robotics',
+      logo: {
+        alt: 'Physical AI',
+        src: 'img/site-logo.svg',
+      },
       items: [
         {
           type: 'docSidebar',
@@ -106,7 +110,11 @@ const config: Config = {
           position: 'left',
           label: 'Book',
         },
-
+        {
+          to: '/docs/Module-1-ROS2/Week-1/digital-vs-physical-ai',
+          label: 'Modules',
+          position: 'left',
+        },
         {
           href: 'https://github.com/your-repo',
           label: 'GitHub',
@@ -118,8 +126,12 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Modules',
+          title: 'Course',
           items: [
+            {
+              label: 'Introduction',
+              to: '/docs/intro',
+            },
             {
               label: 'Module 1: ROS2',
               to: '/docs/Module-1-ROS2/Week-1/digital-vs-physical-ai',
@@ -128,27 +140,32 @@ const config: Config = {
               label: 'Module 2: Digital Twin',
               to: '/docs/Module-2-Digital-Twin/Week-4/setting-up-gazebo-humanoid-simulation',
             },
+          ],
+        },
+        {
+          title: 'Advanced',
+          items: [
             {
               label: 'Module 3: NVIDIA Isaac',
               to: '/docs/Module-3-NVIDIA-Isaac/Week-7/generating-synthetic-data-training',
             },
             {
-              label: 'Module 4: Vision-Language-Action',
+              label: 'Module 4: VLA Models',
               to: '/docs/Module-4-Vision-Language-Action/Week-10/building-high-level-cognitive-execution-pipeline',
             },
           ],
         },
         {
-          title: 'GitHub',
+          title: 'Links',
           items: [
             {
-              label: 'GitHub Repo',
+              label: 'GitHub',
               href: 'https://github.com/your-repo',
             },
           ],
         },
       ],
-      copyright: "Made with ❤️ by Urooj Fatima",
+      copyright: "Made with \u2764\uFE0F by Urooj Fatima",
     },
     prism: {
       theme: prismThemes.github,
